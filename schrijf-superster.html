@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schrijf Superster ✍️</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: linear-gradient(135deg, #fdf4ff 0%, #ede9fe 50%, #dbeafe 100%); min-height: 100vh; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  button { font-family: inherit; cursor: pointer; }
+  .header { padding: 20px 16px; display: flex; align-items: center; gap: 12px; }
+  .back-btn { background: rgba(255,255,255,0.2); border: none; border-radius: 12px; padding: 8px 14px; color: white; font-size: 18px; cursor: pointer; }
+  .card { background: white; border-radius: 20px; padding: 18px; margin-bottom: 14px; box-shadow: 0 4px 16px rgba(124,58,237,0.1); }
+  .badge-moeilijk { border-radius: 99px; padding: 2px 10px; font-size: 11px; font-weight: 700; color: #1e1b4b; display: inline-block; }
+  .badge-ps { background: #e0f2fe; color: #0369a1; border-radius: 99px; padding: 2px 8px; font-size: 10px; font-weight: 700; display: inline-block; }
+  .btn-primary { width: 100%; background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; border: none; border-radius: 14px; padding: 15px; font-size: 15px; font-weight: 700; cursor: pointer; display: block; text-align: center; }
+  .btn-green { width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; border-radius: 14px; padding: 15px; font-size: 15px; font-weight: 800; cursor: pointer; margin-top: 12px; box-shadow: 0 4px 16px rgba(16,185,129,0.3); }
+  .btn-green:disabled { background: #d1d5db; box-shadow: none; cursor: not-allowed; }
+  .progress-bar-wrap { background: rgba(255,255,255,0.3); border-radius: 99px; height: 10px; }
+  .progress-bar { background: white; border-radius: 99px; height: 10px; transition: width 0.5s; }
+  #foto-preview { width: 100%; border-radius: 12px; margin-top: 12px; border: 3px solid #a855f7; display: none; }
+  .star { font-size: 16px; }
+  .star.big { font-size: 30px; }
+  .star.dim { opacity: 0.2; }
+</style>
+</head>
+<body>
+
+<!-- API sleutel balk -->
+<div id="api-balk" style="background:#1e1b4b;padding:10px 14px;display:flex;align-items:center;gap:8px">
+  <span style="color:#a78bfa;font-size:12px;white-space:nowrap">🔑 API-sleutel:</span>
+  <input id="api-key-input" type="password" placeholder="sk-ant-..." style="flex:1;background:#312e81;border:1px solid #4c1d95;border-radius:8px;padding:6px 10px;color:white;font-size:12px;outline:none" oninput="slaApiKeyOp(this.value)">
+  <span id="api-status" style="font-size:16px">❌</span>
+</div>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div style="background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);padding:28px 20px 32px;border-radius:0 0 32px 32px;color:white;text-align:center;box-shadow:0 8px 32px rgba(124,58,237,0.3)">
+    <div style="font-size:44px">✍️</div>
+    <h1 style="margin:6px 0 2px;font-size:26px;font-weight:800">Schrijf Superster</h1>
+    <p style="margin:0 0 16px;font-size:13px;opacity:.9">Verbeter je score op elke opdracht!</p>
+    <div style="background:rgba(255,255,255,0.2);border-radius:16px;padding:14px 16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:13px;font-weight:700">🏆 Totale voortgang</span>
+        <span id="home-totaal" style="font-size:13px;font-weight:800">0 / 1000</span>
+      </div>
+      <div class="progress-bar-wrap"><div id="home-voortgang-bar" class="progress-bar" style="width:0%"></div></div>
+      <div id="home-sterren-tekst" style="font-size:11px;margin-top:5px;opacity:.9">0% · 0/30 sterren</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px">
+      <span id="home-level-ster" style="font-size:22px">⭐</span>
+      <div style="flex:1;text-align:left">
+        <div id="home-level-naam" style="font-size:12px;font-weight:700">Pennenridder · 0 punten</div>
+        <div class="progress-bar-wrap" style="margin-top:4px;height:6px"><div id="home-level-bar" class="progress-bar" style="width:0%;height:6px"></div></div>
+      </div>
+      <span id="home-level-next" style="font-size:10px;opacity:.8"></span>
+    </div>
+  </div>
+
+  <div style="padding:18px 16px 0">
+    <div style="display:flex;gap:10px;margin-bottom:18px">
+      <button class="btn-primary" style="flex:2" onclick="toonScherm('opdrachten')">📝 Alle opdrachten</button>
+      <button onclick="toonScherm('badges')" style="flex:1;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;border:none;border-radius:18px;padding:15px 10px;font-size:15px;font-weight:700">🏅 Badges</button>
+    </div>
+    <h2 style="font-size:15px;font-weight:700;color:#4c1d95;margin:0 0 10px">Mijn scores per opdracht</h2>
+    <div id="home-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px"></div>
+    <div style="border-top:1px solid #e5e7eb;padding-top:18px">
+      <div id="reset-wrap">
+        <button onclick="document.getElementById('reset-wrap').innerHTML=resetBevestigHTML()" style="width:100%;background:transparent;border:2px solid #e5e7eb;border-radius:14px;padding:11px;font-size:13px;font-weight:600;color:#9ca3af">🔄 Voortgang resetten</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OPDRACHTEN -->
+<div id="opdrachten" class="screen">
+  <div style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:20px 16px" class="header">
+    <button class="back-btn" onclick="toonScherm('home')">←</button>
+    <div>
+      <h1 style="color:white;font-size:20px;font-weight:800">📝 Alle opdrachten</h1>
+      <div id="opdrachten-subtitel" style="color:rgba(255,255,255,.85);font-size:12px">0/30 sterren</div>
+    </div>
+  </div>
+  <div style="padding:14px 16px 0;display:flex;gap:8px;flex-wrap:wrap">
+    <button onclick="filterOpdrachten('alle')" id="tab-alle" style="background:#7c3aed;color:white;border:2px solid #7c3aed;border-radius:99px;padding:6px 16px;font-size:12px;font-weight:700">Alle</button>
+    <button onclick="filterOpdrachten('1')" id="tab-1" style="background:white;color:#4c1d95;border:2px solid #7c3aed;border-radius:99px;padding:6px 16px;font-size:12px;font-weight:700">Makkelijk</button>
+    <button onclick="filterOpdrachten('2')" id="tab-2" style="background:white;color:#4c1d95;border:2px solid #7c3aed;border-radius:99px;padding:6px 16px;font-size:12px;font-weight:700">Middel</button>
+    <button onclick="filterOpdrachten('3')" id="tab-3" style="background:white;color:#4c1d95;border:2px solid #7c3aed;border-radius:99px;padding:6px 16px;font-size:12px;font-weight:700">Moeilijk</button>
+  </div>
+  <div id="opdrachten-lijst" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px"></div>
+</div>
+
+<!-- BADGES -->
+<div id="badges" class="screen">
+  <div style="background:linear-gradient(135deg,#f59e0b,#f97316);padding:20px 16px" class="header">
+    <button class="back-btn" onclick="toonScherm('home')">←</button>
+    <div>
+      <h1 style="color:white;font-size:20px;font-weight:800">🏅 Badges</h1>
+      <div id="badges-subtitel" style="color:rgba(255,255,255,.85);font-size:12px">0/7 verdiend</div>
+    </div>
+  </div>
+  <div id="badges-grid" style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+</div>
+
+<!-- OPDRACHT DETAIL -->
+<div id="opdracht" class="screen">
+  <div id="opdracht-header" style="background:linear-gradient(135deg,#7c3aed,#a855f7,#ec4899);padding:20px 16px" class="header">
+    <button class="back-btn" onclick="toonScherm('opdrachten')">←</button>
+    <div style="flex:1">
+      <h1 id="opdracht-titel" style="color:white;font-size:19px;font-weight:800;margin:0 0 2px"></h1>
+      <div id="opdracht-meta" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+  </div>
+  <div style="padding:16px;padding-bottom:40px">
+    <div id="doel-banner" style="border-radius:16px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px"></div>
+    <div class="card">
+      <div style="font-size:12px;color:#7c3aed;font-weight:700;margin-bottom:6px">📋 OPDRACHT</div>
+      <div id="opdracht-tekst" style="font-size:16px;font-weight:700;color:#1e1b4b;line-height:1.5"></div>
+    </div>
+    <div style="background:linear-gradient(135deg,#ede9fe,#dbeafe);border-radius:18px;padding:14px;margin-bottom:14px">
+      <div style="font-size:12px;color:#4c1d95;font-weight:700;margin-bottom:8px">💡 Pennenstreken tips:</div>
+      <div id="opdracht-tips"></div>
+    </div>
+    <div id="ps-uitleg-blok" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd);border-radius:18px;padding:14px;margin-bottom:14px;display:none">
+      <div id="ps-uitleg-titel" style="font-size:12px;color:#0369a1;font-weight:700;margin-bottom:6px"></div>
+      <div id="ps-uitleg-tekst" style="color:#0c4a6e;font-size:12px;line-height:1.5"></div>
+    </div>
+
+    <!-- Upload sectie -->
+    <div id="upload-sectie" class="card">
+      <div style="font-size:12px;color:#7c3aed;font-weight:700;margin-bottom:10px">📸 Foto van je handschrift</div>
+      <!-- Camera knop: opent direct de camera -->
+      <label style="display:block;width:100%;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;margin-bottom:10px">
+        📷 Camera openen
+        <input type="file" accept="image/*" capture="environment" id="foto-input-camera" style="display:none" onchange="fotoGekozen(event)">
+      </label>
+      <!-- Fallback: kies uit fotorol -->
+      <label style="display:block;width:100%;background:white;color:#7c3aed;border:2px solid #7c3aed;border-radius:14px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;text-align:center">
+        🖼️ Kies uit fotorol
+        <input type="file" accept="image/*" id="foto-input-galerij" style="display:none" onchange="fotoGekozen(event)">
+      </label>
+      <img id="foto-preview" src="" alt="Handschrift">
+      <button id="beoordeel-btn" class="btn-green" style="display:none" onclick="beoordeelHandschrift()">✨ Laat beoordelen!</button>
+      <button id="andere-foto-btn" onclick="anderedFoto()" style="display:none;width:100%;background:transparent;border:none;color:#9ca3af;font-size:12px;margin-top:8px;cursor:pointer">Andere foto gebruiken</button>
+    </div>
+
+    <!-- Resultaat sectie -->
+    <div id="resultaat-sectie" style="display:none">
+      <div id="record-banner" style="display:none;border-radius:14px;padding:10px 14px;margin-bottom:14px;text-align:center"></div>
+      <div class="card" style="text-align:center">
+        <div id="resultaat-sterren" style="margin-bottom:10px"></div>
+        <div id="resultaat-boodschap" style="font-size:20px;font-weight:800;color:#4c1d95;line-height:1.3"></div>
+        <div id="resultaat-score-badge" style="background:#7c3aed;color:white;border-radius:99px;padding:6px 18px;font-size:14px;font-weight:700;display:inline-block;margin-top:10px"></div>
+      </div>
+      <div id="resultaat-compliment" style="display:none;background:#f0fdf4;border-radius:14px;padding:14px;margin-bottom:10px">
+        <div style="font-weight:700;color:#15803d;font-size:13px;margin-bottom:3px">👏 Wat goed!</div>
+        <div id="compliment-tekst" style="color:#166534;font-size:13px"></div>
+      </div>
+      <div id="resultaat-tip" style="display:none;background:#fffbeb;border-radius:14px;padding:14px;margin-bottom:16px">
+        <div style="font-weight:700;color:#92400e;font-size:13px;margin-bottom:3px">💡 Tip voor de volgende keer:</div>
+        <div id="tip-tekst" style="color:#78350f;font-size:13px"></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="opnieuw()" style="flex:1;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:14px;padding:14px;font-size:14px;font-weight:700">🔄 Opnieuw — beter!</button>
+        <button onclick="toonScherm('opdrachten')" style="flex:1;background:#ede9fe;color:#7c3aed;border:none;border-radius:14px;padding:14px;font-size:14px;font-weight:700">📝 Andere opdracht</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LEVELS = [
+  { naam: "Pennenridder", ster: "⭐", puntenNodig: 0 },
+  { naam: "Schrijfkampioen", ster: "🌟", puntenNodig: 100 },
+  { naam: "Gouden Pen", ster: "✨", puntenNodig: 250 },
+  { naam: "Kalligrafie-held", ster: "🏆", puntenNodig: 500 },
+];
+
+const PS_UITLEG = {
+  pengreep: "Houd de pen tussen duim en wijsvinger, met de middelvinger eronder. Niet te hard knijpen — je hand moet ontspannen blijven!",
+  zithouding: "Zit rechtop, beide voeten plat op de grond. Het papier ligt een beetje schuin. Je schrijfhand schrijft, de andere hand houdt het papier vast.",
+  hulplijnen: "Pennenstreken gebruikt 4 lijnen: de grondlijn (waar de romp op staat), de romplijn (bovenkant van kleine letters), de bovenluslijn (top van l, b, k) en de onderluslijn (onderkant van g, j, p).",
+  stokkenLussen: "Lange letters zoals l, b, d, h, k hebben een stok omhoog. Letters zoals g, j, p, y hebben een lus naar beneden. Let erop dat ze de juiste lengte hebben!",
+  hoofdletters: "In groep 4 leer je hoofdletters. Een hoofdletter is altijd groter dan een kleine letter — hij gaat van de grondlijn tot de bovenluslijn.",
+};
+const PS_ICOON = { pengreep:"✋", zithouding:"🪑", hulplijnen:"📏", stokkenLussen:"🏗️", hoofdletters:"🔠" };
+const PS_NAAM  = { pengreep:"Pengreep", zithouding:"Zithouding", hulplijnen:"Hulplijnen", stokkenLussen:"Stokken & Lussen", hoofdletters:"Hoofdletters" };
+
+const OPDRACHTEN = [
+  { id:1, titel:"Pengreep oefenen", tekst:"Schrijf je voornaam 3 keer netjes op. Let extra goed op hoe je de pen vasthoudt!", emoji:"✍️", moeilijk:1, ps:"pengreep", tips:["Houd de pen tussen duim en wijsvinger, middelvinger eronder","Knijp niet te hard — je hand moet ontspannen zijn","Schrijf langzaam en maak de letters even groot"] },
+  { id:2, titel:"Op de grondlijn", tekst:"Schrijf op gelinieerd papier: 'de kat, de hond, de vis'. Zorg dat elke letter op de lijn staat!", emoji:"📏", moeilijk:1, ps:"hulplijnen", tips:["De onderkant van elke letter staat op de grondlijn","Kleine letters (a, e, o) zijn even hoog — tot de romplijn","Schrijf niet te snel, lijn per lijn"] },
+  { id:3, titel:"Stokken omhoog!", tekst:"Schrijf 5 keer het woord: 'bibliotheek'. Let op de lange letters b, l en k!", emoji:"🏗️", moeilijk:2, ps:"stokkenLussen", tips:["De stok van b, l, h, k gaat omhoog tot de bovenluslijn","De stok is twee keer zo lang als de romp van de letter","Zorg dat alle stokken even hoog zijn"] },
+  { id:4, titel:"Lussen naar beneden", tekst:"Schrijf 3 keer: 'de giraf, de jaguar, de papegaai'. Let op g, j en p!", emoji:"🦒", moeilijk:2, ps:"stokkenLussen", tips:["De lus van g, j, p gaat naar beneden tot de onderluslijn","Een lus is even lang als de romp van de letter","Maak de lus mooi rond, niet te spits"] },
+  { id:5, titel:"Hoofdletters!", tekst:"Schrijf de namen: 'Anna, Bas, Lena, Tom, Sara'. Begin elke naam met een mooie hoofdletter!", emoji:"🔠", moeilijk:1, ps:"hoofdletters", tips:["Een hoofdletter gaat van de grondlijn helemaal tot de bovenluslijn","Een hoofdletter is altijd groter dan de kleine letters erna","Schrijf de hoofdletter wat breder dan een kleine letter"] },
+  { id:6, titel:"ij en ei spelling", tekst:"Schrijf 3 keer elk woord: 'rijden, feest, bijl, meisje, tijd, ei'.", emoji:"🔤", moeilijk:2, ps:"hulplijnen", tips:["De puntjes op de ij staan precies boven de letters, op de romplijn","Schrijf ij en ei als twee aparte letters, maar wel dicht bij elkaar","Let op dat de j een mooie lus naar beneden heeft"] },
+  { id:7, titel:"Hoofdletters A t/m M", tekst:"Schrijf het hele alfabet van A tot M in hoofdletters. Schrijf ze groot en duidelijk!", emoji:"👑", moeilijk:2, ps:"hoofdletters", tips:["Alle hoofdletters zijn even hoog (van grondlijn tot bovenluslijn)","Laat ruimte tussen elke hoofdletter","Schrijf elke letter als één vloeiende beweging"] },
+  { id:8, titel:"Hoofdletters N t/m Z", tekst:"Schrijf het alfabet van N tot Z in hoofdletters. Let op de moeilijke letters W, X en Z!", emoji:"🏆", moeilijk:3, ps:"hoofdletters", tips:["De W heeft twee V's naast elkaar — maak ze gelijkmatig","De X heeft twee diagonale strepen die elkaar kruisen in het midden","De Z heeft drie strepen: boven, diagonaal, onder — allemaal even lang"] },
+  { id:9, titel:"Zithouding check", tekst:"Vraag iemand om te kijken hoe je zit. Schrijf dan: 'Ik zit rechtop en schrijf netjes!'", emoji:"🪑", moeilijk:1, ps:"zithouding", tips:["Zit rechtop — rug recht, niet hangen","Beide voeten plat op de grond","Het papier ligt een beetje schuin (voor rechtshandigen: linksboven)"] },
+  { id:10, titel:"Dikke uitdaging", tekst:"Schrijf de zin: 'Wij rijden op de fiets naar de bibliotheek.' Let op ALLES tegelijk!", emoji:"🚴", moeilijk:3, ps:"hulplijnen", tips:["Check je pengreep vóór je begint","Stokken omhoog (f, t, l, b), lussen omlaag (j bij rijden)","Hoofdletter W aan het begin, punt aan het einde — netjes!"] },
+];
+
+const BADGES = [
+  { id:"eerste",           emoji:"🎯", naam:"Eerste stap",      beschrijving:"Je eerste opdracht gedaan!" },
+  { id:"perfecte_een",     emoji:"💎", naam:"Perfectionist",    beschrijving:"3 sterren op één opdracht!" },
+  { id:"alle_een_ster",    emoji:"🌟", naam:"Alle opdrachten",  beschrijving:"Elke opdracht minstens 1 ster!" },
+  { id:"helft_drie",       emoji:"🔥", naam:"Halve held",       beschrijving:"4 opdrachten op 3 sterren!" },
+  { id:"alle_drie",        emoji:"👑", naam:"Schrijf Superster",beschrijving:"Alle 10 opdrachten op 3 sterren!" },
+  { id:"verbetering",      emoji:"💪", naam:"Doorzetter",       beschrijving:"Je eigen score verbeterd!" },
+  { id:"honderd",          emoji:"💯", naam:"Honderd punten",   beschrijving:"100 punten verzameld!" },
+];
+
+// State
+let punten = 0;
+let besteScores = {};
+let behaaldeBadges = [];
+let huidigOpdracht = null;
+let huidigFilter = 'alle';
+let uploadedImageData = null;
+let apiKey = '';
+
+function slaApiKeyOp(val) {
+  apiKey = val.trim();
+  localStorage.setItem('schrijf_api_key', apiKey);
+  document.getElementById('api-status').textContent = apiKey.startsWith('sk-ant-') ? '✅' : '❌';
+}
+
+const MAX_SCORE = OPDRACHTEN.length * 100;
+
+function scoreNaarSterren(s) { return s >= 85 ? 3 : s >= 65 ? 2 : s >= 40 ? 1 : 0; }
+
+function sterrenHTML(score, groot = false) {
+  const s = scoreNaarSterren(score);
+  const kl = groot ? 'big' : '';
+  return [1,2,3].map(i => `<span class="star ${kl} ${i > s ? 'dim' : ''}">⭐</span>`).join('');
+}
+
+function moeilijkBadgeHTML(n) {
+  const m = { 1:{t:'Makkelijk',c:'#86efac'}, 2:{t:'Middel',c:'#fcd34d'}, 3:{t:'Moeilijk',c:'#f9a8d4'} };
+  return `<span class="badge-moeilijk" style="background:${m[n].c}">${m[n].t}</span>`;
+}
+
+function toonScherm(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'home') renderHome();
+  if (id === 'opdrachten') renderOpdrachten();
+  if (id === 'badges') renderBadges();
+  window.scrollTo(0,0);
+}
+
+function renderHome() {
+  const totaal = OPDRACHTEN.reduce((a,o) => a + (besteScores[o.id]||0), 0);
+  const totaleSterren = OPDRACHTEN.reduce((a,o) => a + scoreNaarSterren(besteScores[o.id]||0), 0);
+  const pct = Math.round(totaal / MAX_SCORE * 100);
+  document.getElementById('home-totaal').textContent = `${totaal} / ${MAX_SCORE}`;
+  document.getElementById('home-voortgang-bar').style.width = pct + '%';
+  document.getElementById('home-sterren-tekst').textContent = `${pct}% · ${totaleSterren}/${OPDRACHTEN.length*3} sterren`;
+
+  const level = LEVELS.filter(l => l.puntenNodig <= punten).at(-1);
+  const nextLevel = LEVELS.find(l => l.puntenNodig > punten);
+  const lp = nextLevel ? Math.min(100, Math.round((punten - level.puntenNodig) / (nextLevel.puntenNodig - level.puntenNodig) * 100)) : 100;
+  document.getElementById('home-level-ster').textContent = level.ster;
+  document.getElementById('home-level-naam').textContent = `${level.naam} · ${punten} punten`;
+  document.getElementById('home-level-bar').style.width = lp + '%';
+  document.getElementById('home-level-next').textContent = nextLevel ? `→ ${nextLevel.naam}` : '🎉 Max!';
+
+  const grid = document.getElementById('home-grid');
+  grid.innerHTML = OPDRACHTEN.map(o => {
+    const score = besteScores[o.id] || 0;
+    const s = scoreNaarSterren(score);
+    const gespeeld = !!besteScores[o.id];
+    const goud = s === 3 ? 'border:2px solid #fbbf24;' : '';
+    return `<button onclick="startOpdracht(${o.id})" style="background:white;${goud}border-radius:16px;padding:12px 10px;text-align:left;border:${s===3?'2px solid #fbbf24':'2px solid transparent'};cursor:pointer;box-shadow:0 2px 10px rgba(124,58,237,0.08)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <span style="font-size:24px">${o.emoji}</span>
+        ${gespeeld ? sterrenHTML(score) : '<span style="font-size:11px;color:#d1d5db;font-weight:600">Nog doen!</span>'}
+      </div>
+      <div style="font-weight:700;color:#1e1b4b;font-size:13px;margin-top:6px">${o.titel}</div>
+      <div style="font-size:11px;margin-top:2px;${s===3?'color:#d97706;font-weight:700':'color:#9ca3af'}">${gespeeld ? (s===3 ? '✨ Perfect!' : `Score: ${score} · Beter kan!`) : 'Tap om te beginnen →'}</div>
+    </button>`;
+  }).join('');
+}
+
+function resetBevestigHTML() {
+  return `<div style="background:#fef2f2;border:2px solid #fca5a5;border-radius:16px;padding:16px;text-align:center">
+    <div style="font-weight:700;color:#991b1b;font-size:14px;margin-bottom:4px">⚠️ Weet je het zeker?</div>
+    <div style="color:#b91c1c;font-size:12px;margin-bottom:14px">Alle scores, punten en badges worden gewist.</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('reset-wrap').innerHTML='<button onclick=\\'document.getElementById(\\'reset-wrap\\').innerHTML=resetBevestigHTML()\\' style=\\'width:100%;background:transparent;border:2px solid #e5e7eb;border-radius:14px;padding:11px;font-size:13px;font-weight:600;color:#9ca3af\\'>🔄 Voortgang resetten</button>'" style="flex:1;background:white;border:2px solid #d1d5db;border-radius:12px;padding:10px;font-size:13px;font-weight:700;color:#4b5563">Annuleren</button>
+      <button onclick="resetAlles()" style="flex:1;background:#ef4444;border:none;border-radius:12px;padding:10px;font-size:13px;font-weight:700;color:white">Ja, reset alles</button>
+    </div>
+  </div>`;
+}
+
+function resetAlles() {
+  punten = 0; besteScores = {}; behaaldeBadges = [];
+  document.getElementById('reset-wrap').innerHTML = `<button onclick="document.getElementById('reset-wrap').innerHTML=resetBevestigHTML()" style="width:100%;background:transparent;border:2px solid #e5e7eb;border-radius:14px;padding:11px;font-size:13px;font-weight:600;color:#9ca3af">🔄 Voortgang resetten</button>`;
+  renderHome();
+}
+
+function renderOpdrachten() {
+  const totaleSterren = OPDRACHTEN.reduce((a,o) => a + scoreNaarSterren(besteScores[o.id]||0), 0);
+  document.getElementById('opdrachten-subtitel').textContent = `${totaleSterren}/${OPDRACHTEN.length*3} sterren · Verbeter elke score!`;
+  const gefilterd = huidigFilter === 'alle' ? OPDRACHTEN : OPDRACHTEN.filter(o => o.moeilijk === parseInt(huidigFilter));
+  document.getElementById('opdrachten-lijst').innerHTML = gefilterd.map(o => {
+    const score = besteScores[o.id] || 0;
+    const s = scoreNaarSterren(score);
+    const gespeeld = !!besteScores[o.id];
+    const volgende = s < 3 ? (s===0?40:s===1?65:85) : null;
+    return `<button onclick="startOpdracht(${o.id})" style="background:white;border:${s===3?'2px solid #fbbf24':'2px solid transparent'};border-radius:20px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 2px 14px rgba(124,58,237,0.1);text-align:left;width:100%">
+      <span style="font-size:34px">${o.emoji}</span>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">
+          <span style="font-weight:800;color:#1e1b4b;font-size:15px">${o.titel}</span>
+          ${moeilijkBadgeHTML(o.moeilijk)}
+          ${o.ps ? `<span class="badge-ps">${PS_ICOON[o.ps]} ${PS_NAAM[o.ps]}</span>` : ''}
+        </div>
+        <div style="color:#6b7280;font-size:12px;margin-bottom:4px">${o.tekst.slice(0,42)}…</div>
+        ${gespeeld
+          ? `<div style="display:flex;align-items:center;gap:8px">${sterrenHTML(score)}<span style="font-size:12px;font-weight:700;color:#7c3aed">${score}/100</span>${volgende ? `<span style="font-size:11px;color:#9ca3af">· Doel: ${volgende}+ voor ${s+1}⭐</span>` : '<span style="font-size:11px;color:#d97706;font-weight:700">✨ Topprestatie!</span>'}</div>`
+          : `<span style="font-size:12px;color:#a78bfa;font-weight:700">Nog niet gedaan — doe het nu!</span>`}
+      </div>
+      <span style="font-size:20px;color:#a855f7">›</span>
+    </button>`;
+  }).join('');
+}
+
+function filterOpdrachten(f) {
+  huidigFilter = f;
+  ['alle','1','2','3'].forEach(t => {
+    const btn = document.getElementById('tab-'+t);
+    btn.style.background = t === f ? '#7c3aed' : 'white';
+    btn.style.color = t === f ? 'white' : '#4c1d95';
+  });
+  renderOpdrachten();
+}
+
+function renderBadges() {
+  document.getElementById('badges-subtitel').textContent = `${behaaldeBadges.length}/${BADGES.length} verdiend`;
+  document.getElementById('badges-grid').innerHTML = BADGES.map(b => {
+    const v = behaaldeBadges.includes(b.id);
+    return `<div style="background:white;border-radius:20px;padding:16px;text-align:center;opacity:${v?1:0.5};border:${v?'2px solid #f59e0b':'2px solid #e5e7eb'};box-shadow:${v?'0 4px 16px rgba(245,158,11,0.2)':'none'}">
+      <div style="font-size:36px;filter:${v?'none':'grayscale(1)'}">${b.emoji}</div>
+      <div style="font-weight:800;color:#1e1b4b;font-size:13px;margin-top:6px">${b.naam}</div>
+      <div style="color:#6b7280;font-size:11px;margin-top:3px;line-height:1.3">${b.beschrijving}</div>
+      ${v ? '<div style="background:#fef3c7;color:#92400e;border-radius:99px;padding:3px 10px;font-size:10px;font-weight:700;margin-top:8px;display:inline-block">Verdiend! 🎉</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+function startOpdracht(id) {
+  huidigOpdracht = OPDRACHTEN.find(o => o.id === id);
+  uploadedImageData = null;
+  const o = huidigOpdracht;
+  const oudeScore = besteScores[o.id] || 0;
+  const oudeSterren = scoreNaarSterren(oudeScore);
+  const gespeeld = !!besteScores[o.id];
+
+  document.getElementById('opdracht-titel').textContent = `${o.emoji} ${o.titel}`;
+  document.getElementById('opdracht-meta').innerHTML = `${moeilijkBadgeHTML(o.moeilijk)}${gespeeld ? `<span style="color:rgba(255,255,255,.9);font-size:12px">Beste: ${oudeScore}/100 ${sterrenHTML(oudeScore)}</span>` : ''}`;
+  document.getElementById('opdracht-tekst').textContent = o.tekst;
+  document.getElementById('opdracht-tips').innerHTML = o.tips.map((t,i) =>
+    `<div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start">
+      <span style="background:#7c3aed;color:white;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px">${i+1}</span>
+      <span style="color:#4c1d95;font-size:13px">${t}</span>
+    </div>`).join('');
+
+  if (o.ps) {
+    document.getElementById('ps-uitleg-blok').style.display = 'block';
+    document.getElementById('ps-uitleg-titel').textContent = `${PS_ICOON[o.ps]} Pennenstreken: ${PS_NAAM[o.ps]}`;
+    document.getElementById('ps-uitleg-tekst').textContent = PS_UITLEG[o.ps];
+  } else {
+    document.getElementById('ps-uitleg-blok').style.display = 'none';
+  }
+
+  // Doel banner
+  const doelSterren = Math.min(3, oudeSterren + 1);
+  const doelScore = doelSterren === 1 ? 40 : doelSterren === 2 ? 65 : 85;
+  const banner = document.getElementById('doel-banner');
+  if (oudeSterren === 3) {
+    banner.style.background = 'linear-gradient(135deg,#fef3c7,#fde68a)';
+    banner.innerHTML = `<span style="font-size:28px">👑</span><div><div style="font-weight:800;color:#92400e;font-size:14px">Perfecte score! Kun jij het nog beter?</div><div style="font-size:12px;color:#78350f">Huidige record: ${oudeScore}/100</div></div>`;
+  } else if (gespeeld) {
+    banner.style.background = 'linear-gradient(135deg,#ede9fe,#dbeafe)';
+    banner.innerHTML = `<span style="font-size:28px">🎯</span><div><div style="font-weight:800;color:#4c1d95;font-size:14px">Doel: ${doelSterren} ster${doelSterren>1?'ren':''} halen!</div><div style="font-size:12px;color:#6b7280">Je hebt nu ${oudeSterren}⭐ (score ${oudeScore}). Haal ${doelScore}+ voor ${doelSterren}⭐!</div></div>`;
+  } else {
+    banner.style.background = 'linear-gradient(135deg,#ede9fe,#dbeafe)';
+    banner.innerHTML = `<span style="font-size:28px">🎯</span><div><div style="font-weight:800;color:#4c1d95;font-size:14px">Eerste poging — doe je best!</div><div style="font-size:12px;color:#6b7280">40+ = 1⭐ · 65+ = 2⭐ · 85+ = 3⭐</div></div>`;
+  }
+
+  // Reset upload UI
+  document.getElementById('upload-sectie').style.display = 'block';
+  document.getElementById('resultaat-sectie').style.display = 'none';
+  document.getElementById('foto-preview').style.display = 'none';
+  document.getElementById('foto-preview').src = '';
+  document.getElementById('beoordeel-btn').style.display = 'none';
+  document.getElementById('andere-foto-btn').style.display = 'none';
+  document.getElementById('foto-input-camera').value = '';
+  document.getElementById('foto-input-galerij').value = '';
+
+  toonScherm('opdracht');
+}
+
+function fotoGekozen(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    // Verklein de foto naar max 1200px breed zodat hij zeker past
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      uploadedImageData = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('foto-preview').src = uploadedImageData;
+      document.getElementById('foto-preview').style.display = 'block';
+      document.getElementById('beoordeel-btn').style.display = 'block';
+      document.getElementById('andere-foto-btn').style.display = 'block';
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function anderedFoto() {
+  uploadedImageData = null;
+  document.getElementById('foto-preview').style.display = 'none';
+  document.getElementById('beoordeel-btn').style.display = 'none';
+  document.getElementById('andere-foto-btn').style.display = 'none';
+  document.getElementById('foto-input-camera').value = '';
+  document.getElementById('foto-input-galerij').value = '';
+}
+
+async function beoordeelHandschrift() {
+  if (!uploadedImageData || !huidigOpdracht) return;
+  if (!apiKey || !apiKey.startsWith('sk-ant-')) {
+    alert('❌ Vul eerst een geldige Anthropic API-sleutel in bovenaan de pagina (begint met sk-ant-).');
+    return;
+  }
+  const btn = document.getElementById('beoordeel-btn');
+  btn.disabled = true; btn.textContent = '⏳ Even geduld...';
+  const oudeScore = besteScores[huidigOpdracht.id] || 0;
+  try {
+    const base64 = uploadedImageData.split(',')[1];
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-allowed': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Je bent een superaardige juf die handschrift beoordeelt van kinderen van 7 jaar (groep 4) die de schrijfmethode Pennenstreken gebruiken. Je geeft altijd aanmoedigende feedback.
+Beoordeel op: lettervormen, hulplijnen (grondlijn, stokken, lussen), regelmaat, leesbaarheid.
+Speciale focus: ${PS_UITLEG[huidigOpdracht.ps] || ''}
+Opdracht: "${huidigOpdracht.tekst}"
+Reageer ALLEEN met JSON (geen markdown):
+{"score":<0-100>,"hoofdboodschap":"<leuke zin voor kind van 7>","compliment":"<wat gaat goed>","tip":"<één concrete Pennenstreken-tip>"}`,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+          { type: 'text', text: 'Beoordeel dit handschrift. Geef alleen JSON.' }
+        ]}]
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+    const data = await resp.json();
+    const tekst = data.content.map(i => i.text||'').join('');
+    const resultaat = JSON.parse(tekst.replace(/```json|```/g,'').trim());
+    const nieuweScore = resultaat.score || 0;
+    const isRecord = nieuweScore > oudeScore;
+    const delta = isRecord ? Math.max(1, Math.round((nieuweScore - oudeScore) * 0.5)) : 0;
+
+    if (isRecord) {
+      besteScores[huidigOpdracht.id] = nieuweScore;
+      punten += delta;
+    }
+
+    // Badges
+    const scores = OPDRACHTEN.map(o => besteScores[o.id]||0);
+    const check = (id, cond) => { if (cond && !behaaldeBadges.includes(id)) behaaldeBadges.push(id); };
+    check('eerste', Object.keys(besteScores).length >= 1);
+    check('perfecte_een', scores.some(s => s >= 85));
+    check('alle_een_ster', scores.every(s => s >= 40));
+    check('helft_drie', scores.filter(s => s >= 85).length >= 4);
+    check('alle_drie', scores.every(s => s >= 85));
+    check('verbetering', isRecord && oudeScore > 0);
+    check('honderd', punten >= 100);
+
+    // Toon resultaat
+    document.getElementById('upload-sectie').style.display = 'none';
+    document.getElementById('resultaat-sectie').style.display = 'block';
+
+    const recBanner = document.getElementById('record-banner');
+    if (isRecord) {
+      recBanner.style.display = 'block';
+      recBanner.style.background = 'linear-gradient(135deg,#fef3c7,#fde68a)';
+      recBanner.innerHTML = `<div style="font-weight:800;color:#92400e;font-size:15px">🎉 Nieuw persoonlijk record!</div><div style="font-size:13px;color:#78350f">${oudeScore > 0 ? `${oudeScore} → ${nieuweScore}` : `Eerste score: ${nieuweScore}`} · +${delta} punten!</div>`;
+    } else if (oudeScore > 0) {
+      recBanner.style.display = 'block';
+      recBanner.style.background = '#f3f4f6';
+      recBanner.innerHTML = `<div style="font-weight:700;color:#4b5563;font-size:13px">Nog niet je record (${oudeScore}/100) — probeer het nog eens!</div>`;
+    } else {
+      recBanner.style.display = 'none';
+    }
+
+    document.getElementById('resultaat-sterren').innerHTML = sterrenHTML(nieuweScore, true);
+    document.getElementById('resultaat-boodschap').textContent = resultaat.hoofdboodschap;
+    document.getElementById('resultaat-score-badge').textContent = `Score: ${nieuweScore} / 100`;
+
+    const cDiv = document.getElementById('resultaat-compliment');
+    if (resultaat.compliment) { cDiv.style.display='block'; document.getElementById('compliment-tekst').textContent = resultaat.compliment; }
+    else cDiv.style.display='none';
+    const tDiv = document.getElementById('resultaat-tip');
+    if (resultaat.tip) { tDiv.style.display='block'; document.getElementById('tip-tekst').textContent = resultaat.tip; }
+    else tDiv.style.display='none';
+
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '✨ Laat beoordelen!';
+    const msg = e.message || '';
+    if (msg.includes('401') || msg.includes('auth')) {
+      alert('❌ API-sleutel klopt niet. Voeg een geldige Anthropic API-sleutel in via de instellingen bovenin.');
+    } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
+      alert('❌ Verbindingsfout.\n\nOpen het HTML-bestand via Chrome of Firefox en zorg dat je internet hebt. Op sommige Android-browsers werkt de lokale api-aanroep niet — probeer het bestand te openen via de Files-app → Chrome.');
+    } else {
+      alert('❌ Er ging iets mis: ' + msg + '\n\nProbeer opnieuw.');
+    }
+  }
+}
+
+function opnieuw() {
+  uploadedImageData = null;
+  document.getElementById('upload-sectie').style.display = 'block';
+  document.getElementById('resultaat-sectie').style.display = 'none';
+  document.getElementById('foto-preview').style.display = 'none';
+  document.getElementById('beoordeel-btn').style.display = 'none';
+  document.getElementById('beoordeel-btn').disabled = false;
+  document.getElementById('beoordeel-btn').textContent = '✨ Laat beoordelen!';
+  document.getElementById('andere-foto-btn').style.display = 'none';
+  document.getElementById('foto-input-camera').value = '';
+  document.getElementById('foto-input-galerij').value = '';
+}
+
+// Init
+const opgeslagenKey = localStorage.getItem('schrijf_api_key') || '';
+if (opgeslagenKey) {
+  apiKey = opgeslagenKey;
+  document.getElementById('api-key-input').value = opgeslagenKey;
+  document.getElementById('api-status').textContent = opgeslagenKey.startsWith('sk-ant-') ? '✅' : '❌';
+}
+renderHome();
+</script>
+</body>
+</html>

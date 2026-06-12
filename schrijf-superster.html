@@ -70,6 +70,13 @@
       <div id="reset-wrap">
         <button onclick="document.getElementById('reset-wrap').innerHTML=resetBevestigHTML()" style="width:100%;background:transparent;border:2px solid #e5e7eb;border-radius:14px;padding:11px;font-size:13px;font-weight:600;color:#9ca3af">🔄 Voortgang resetten</button>
       </div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <button onclick="exporteerVoortgang()" style="flex:1;background:transparent;border:2px solid #a78bfa;border-radius:14px;padding:10px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer">💾 Backup maken</button>
+        <label style="flex:1;background:transparent;border:2px solid #a78bfa;border-radius:14px;padding:10px;font-size:12px;font-weight:700;color:#7c3aed;cursor:pointer;text-align:center">
+          📂 Backup laden
+          <input type="file" accept=".json" style="display:none" onchange="importeerVoortgang(event)">
+        </label>
+      </div>
     </div>
   </div>
 </div>
@@ -226,6 +233,49 @@ function slaApiKeyOp(val) {
   document.getElementById('api-status').textContent = apiKey.startsWith('https://') ? '✅' : '❌';
 }
 
+function slaVoortgangOp() {
+  localStorage.setItem('schrijf_voortgang', JSON.stringify({ punten, besteScores, behaaldeBadges }));
+}
+
+function laadVoortgang() {
+  try {
+    const opgeslagen = localStorage.getItem('schrijf_voortgang');
+    if (opgeslagen) {
+      const data = JSON.parse(opgeslagen);
+      punten = data.punten || 0;
+      besteScores = data.besteScores || {};
+      behaaldeBadges = data.behaaldeBadges || [];
+    }
+  } catch(e) { console.log('Kon voortgang niet laden:', e); }
+}
+
+function exporteerVoortgang() {
+  const data = JSON.stringify({ punten, besteScores, behaaldeBadges }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'schrijf-superster-voortgang.json';
+  a.click();
+}
+
+function importeerVoortgang(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      punten = data.punten || 0;
+      besteScores = data.besteScores || {};
+      behaaldeBadges = data.behaaldeBadges || [];
+      slaVoortgangOp();
+      renderHome();
+      alert('✅ Voortgang geladen!');
+    } catch(e) { alert('❌ Ongeldig bestand.'); }
+  };
+  reader.readAsText(file);
+}
+
 const MAX_SCORE = OPDRACHTEN.length * 100;
 
 function scoreNaarSterren(s) { return s >= 85 ? 3 : s >= 65 ? 2 : s >= 40 ? 1 : 0; }
@@ -296,6 +346,7 @@ function resetBevestigHTML() {
 
 function resetAlles() {
   punten = 0; besteScores = {}; behaaldeBadges = [];
+  slaVoortgangOp();
   document.getElementById('reset-wrap').innerHTML = `<button onclick="document.getElementById('reset-wrap').innerHTML=resetBevestigHTML()" style="width:100%;background:transparent;border:2px solid #e5e7eb;border-radius:14px;padding:11px;font-size:13px;font-weight:600;color:#9ca3af">🔄 Voortgang resetten</button>`;
   renderHome();
 }
@@ -492,6 +543,7 @@ Reageer ALLEEN met JSON (geen markdown):
     check('alle_drie', scores.every(s => s >= 85));
     check('verbetering', isRecord && oudeScore > 0);
     check('honderd', punten >= 100);
+    slaVoortgangOp();
 
     // Toon resultaat
     document.getElementById('upload-sectie').style.display = 'none';
@@ -548,6 +600,7 @@ function opnieuw() {
 }
 
 // Init
+laadVoortgang();
 const opgeslagenKey = localStorage.getItem('schrijf_api_key') || '';
 if (opgeslagenKey) {
   apiKey = opgeslagenKey;

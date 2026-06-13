@@ -64,6 +64,7 @@
       <button class="btn-primary" style="flex:2" onclick="toonScherm('opdrachten')">📝 Alle opdrachten</button>
       <button onclick="toonScherm('badges')" style="flex:1;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;border:none;border-radius:18px;padding:15px 10px;font-size:15px;font-weight:700">🏅 Badges</button>
     </div>
+    <button onclick="toonScherm('geschiedenis')" style="width:100%;background:linear-gradient(135deg,#0ea5e9,#6366f1);color:white;border:none;border-radius:18px;padding:14px;font-size:15px;font-weight:700;margin-bottom:18px;cursor:pointer">📖 Mijn pogingen bekijken</button>
     <h2 style="font-size:15px;font-weight:700;color:#4c1d95;margin:0 0 10px">Mijn scores per opdracht</h2>
     <div id="home-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px"></div>
     <div style="border-top:1px solid #e5e7eb;padding-top:18px">
@@ -109,6 +110,19 @@
     </div>
   </div>
   <div id="badges-grid" style="padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+</div>
+
+<!-- GESCHIEDENIS -->
+<div id="geschiedenis" class="screen">
+  <div style="background:linear-gradient(135deg,#0ea5e9,#6366f1);padding:20px 16px" class="header">
+    <button class="back-btn" onclick="toonScherm('home')">←</button>
+    <div>
+      <h1 style="color:white;font-size:20px;font-weight:800">📖 Mijn pogingen</h1>
+      <div id="geschiedenis-subtitel" style="color:rgba(255,255,255,.85);font-size:12px"></div>
+    </div>
+  </div>
+  <div style="padding:14px 16px 0;display:flex;gap:8px;overflow-x:auto;padding-bottom:4px" id="geschiedenis-tabs"></div>
+  <div id="geschiedenis-lijst" style="padding:14px 16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px"></div>
 </div>
 
 <!-- OPDRACHT DETAIL -->
@@ -222,6 +236,7 @@ const BADGES = [
 let punten = 0;
 let besteScores = {};
 let behaaldeBadges = [];
+let geschiedenis = {}; // { [opdrachtId]: [{datum, score, foto, compliment, tip, hoofdboodschap}] }
 let huidigOpdracht = null;
 let huidigFilter = 'alle';
 let uploadedImageData = null;
@@ -234,7 +249,7 @@ function slaApiKeyOp(val) {
 }
 
 function slaVoortgangOp() {
-  localStorage.setItem('schrijf_voortgang', JSON.stringify({ punten, besteScores, behaaldeBadges }));
+  localStorage.setItem('schrijf_voortgang', JSON.stringify({ punten, besteScores, behaaldeBadges, geschiedenis }));
 }
 
 function laadVoortgang() {
@@ -245,12 +260,13 @@ function laadVoortgang() {
       punten = data.punten || 0;
       besteScores = data.besteScores || {};
       behaaldeBadges = data.behaaldeBadges || [];
+      geschiedenis = data.geschiedenis || {};
     }
   } catch(e) { console.log('Kon voortgang niet laden:', e); }
 }
 
 function exporteerVoortgang() {
-  const data = JSON.stringify({ punten, besteScores, behaaldeBadges }, null, 2);
+  const data = JSON.stringify({ punten, besteScores, behaaldeBadges, geschiedenis }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -291,13 +307,66 @@ function moeilijkBadgeHTML(n) {
   return `<span class="badge-moeilijk" style="background:${m[n].c}">${m[n].t}</span>`;
 }
 
+let geschiedenisFilter = 'alle';
+
 function toonScherm(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if (id === 'home') renderHome();
   if (id === 'opdrachten') renderOpdrachten();
   if (id === 'badges') renderBadges();
+  if (id === 'geschiedenis') renderGeschiedenis();
   window.scrollTo(0,0);
+}
+
+function renderGeschiedenis() {
+  // Verzamel alle pogingen over alle opdrachten
+  let alle = [];
+  OPDRACHTEN.forEach(o => {
+    (geschiedenis[o.id] || []).forEach(p => {
+      alle.push({ ...p, opdrachtId: o.id, opdrachtTitel: o.titel, opdrachtEmoji: o.emoji });
+    });
+  });
+  alle.sort((a,b) => new Date(b.datum) - new Date(a.datum));
+
+  const gefilterd = geschiedenisFilter === 'alle' ? alle : alle.filter(p => p.opdrachtId === parseInt(geschiedenisFilter));
+  document.getElementById('geschiedenis-subtitel').textContent = `${alle.length} pogingen totaal`;
+
+  // Tabs per opdracht
+  const metPogingen = OPDRACHTEN.filter(o => (geschiedenis[o.id] || []).length > 0);
+  document.getElementById('geschiedenis-tabs').innerHTML =
+    [{ id:'alle', titel:'Alle', emoji:'📋' }, ...metPogingen.map(o => ({ id: o.id, titel: o.titel, emoji: o.emoji }))]
+    .map(t => `<button onclick="geschiedenisFilter='${t.id}';renderGeschiedenis()" style="white-space:nowrap;background:${geschiedenisFilter==t.id?'#6366f1':'white'};color:${geschiedenisFilter==t.id?'white':'#4c1d95'};border:2px solid #6366f1;border-radius:99px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">${t.emoji} ${t.titel}</button>`)
+    .join('');
+
+  if (gefilterd.length === 0) {
+    document.getElementById('geschiedenis-lijst').innerHTML = `<div style="text-align:center;padding:40px 20px;color:#9ca3af"><div style="font-size:48px;margin-bottom:12px">📝</div><div style="font-weight:700;font-size:15px">Nog geen pogingen!</div><div style="font-size:13px;margin-top:6px">Maak je eerste opdracht om hem hier terug te zien.</div></div>`;
+    return;
+  }
+
+  document.getElementById('geschiedenis-lijst').innerHTML = gefilterd.map((p, i) => {
+    const datum = new Date(p.datum);
+    const datumStr = datum.toLocaleDateString('nl-NL', { day:'numeric', month:'long' }) + ' om ' + datum.toLocaleTimeString('nl-NL', { hour:'2-digit', minute:'2-digit' });
+    const sterren = scoreNaarSterren(p.score);
+    const sterrenHTML_s = [1,2,3].map(i => `<span style="font-size:18px;opacity:${i<=sterren?1:0.2}">${i<=sterren?'⭐':'⭐'}</span>`).join('');
+    return `<div style="background:white;border-radius:20px;overflow:hidden;box-shadow:0 2px 14px rgba(99,102,241,0.1)">
+      ${p.foto ? `<img src="${p.foto}" style="width:100%;max-height:200px;object-fit:cover;border-bottom:3px solid #e0e7ff">` : ''}
+      <div style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <div style="font-weight:800;color:#1e1b4b;font-size:14px">${p.opdrachtEmoji} ${p.opdrachtTitel}</div>
+            <div style="color:#9ca3af;font-size:11px;margin-top:2px">${datumStr}</div>
+          </div>
+          <div style="text-align:right">
+            ${sterrenHTML_s}
+            <div style="font-size:12px;font-weight:700;color:#6366f1;margin-top:2px">${p.score}/100</div>
+          </div>
+        </div>
+        ${p.compliment ? `<div style="background:#f0fdf4;border-radius:10px;padding:10px;margin-bottom:8px"><div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:2px">👏 Goed:</div><div style="font-size:12px;color:#166534">${p.compliment}</div></div>` : ''}
+        ${p.tip ? `<div style="background:#fffbeb;border-radius:10px;padding:10px"><div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:2px">💡 Tip:</div><div style="font-size:12px;color:#78350f">${p.tip}</div></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderHome() {
@@ -345,7 +414,7 @@ function resetBevestigHTML() {
 }
 
 function resetAlles() {
-  punten = 0; besteScores = {}; behaaldeBadges = [];
+  punten = 0; besteScores = {}; behaaldeBadges = {}; geschiedenis = {};
   slaVoortgangOp();
   document.getElementById('reset-wrap').innerHTML = `<button onclick="document.getElementById('reset-wrap').innerHTML=resetBevestigHTML()" style="width:100%;background:transparent;border:2px solid #e5e7eb;border-radius:14px;padding:11px;font-size:13px;font-weight:600;color:#9ca3af">🔄 Voortgang resetten</button>`;
   renderHome();
@@ -543,6 +612,19 @@ Reageer ALLEEN met JSON (geen markdown):
     check('alle_drie', scores.every(s => s >= 85));
     check('verbetering', isRecord && oudeScore > 0);
     check('honderd', punten >= 100);
+
+    // Sla poging op in geschiedenis (max 5 foto's per opdracht om localStorage niet te overbelasten)
+    if (!geschiedenis[huidigOpdracht.id]) geschiedenis[huidigOpdracht.id] = [];
+    geschiedenis[huidigOpdracht.id].unshift({
+      datum: new Date().toISOString(),
+      score: nieuweScore,
+      foto: uploadedImageData,
+      hoofdboodschap: resultaat.hoofdboodschap,
+      compliment: resultaat.compliment,
+      tip: resultaat.tip,
+    });
+    if (geschiedenis[huidigOpdracht.id].length > 5) geschiedenis[huidigOpdracht.id] = geschiedenis[huidigOpdracht.id].slice(0, 5);
+
     slaVoortgangOp();
 
     // Toon resultaat

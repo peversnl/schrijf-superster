@@ -510,12 +510,14 @@ function startOpdracht(id) {
     banner.innerHTML = `<span style="font-size:28px">🎯</span><div><div style="font-weight:800;color:#4c1d95;font-size:14px">Eerste poging — doe je best!</div><div style="font-size:12px;color:#6b7280">40+ = 1⭐ · 65+ = 2⭐ · 85+ = 3⭐</div></div>`;
   }
 
-  // Reset upload UI
+  // Reset upload UI volledig
   document.getElementById('upload-sectie').style.display = 'block';
   document.getElementById('resultaat-sectie').style.display = 'none';
   document.getElementById('foto-preview').style.display = 'none';
   document.getElementById('foto-preview').src = '';
   document.getElementById('beoordeel-btn').style.display = 'none';
+  document.getElementById('beoordeel-btn').disabled = false;
+  document.getElementById('beoordeel-btn').textContent = '✨ Laat beoordelen!';
   document.getElementById('andere-foto-btn').style.display = 'none';
   document.getElementById('foto-input-camera').value = '';
   document.getElementById('foto-input-galerij').value = '';
@@ -655,13 +657,17 @@ Reageer ALLEEN met JSON (geen markdown):
     if (resultaat.tip) { tDiv.style.display='block'; document.getElementById('tip-tekst').textContent = resultaat.tip; }
     else tDiv.style.display='none';
 
+    // Reset knop zodat volgende poging meteen werkt
+    btn.disabled = false;
+    btn.textContent = '✨ Laat beoordelen!';
+
   } catch(e) {
     btn.disabled = false; btn.textContent = '✨ Laat beoordelen!';
     const msg = e.message || '';
     if (msg.includes('401') || msg.includes('auth')) {
-      alert('❌ API-sleutel klopt niet. Voeg een geldige Anthropic API-sleutel in via de instellingen bovenin.');
-    } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS')) {
-      alert('❌ Verbindingsfout.\n\nOpen het HTML-bestand via Chrome of Firefox en zorg dat je internet hebt. Op sommige Android-browsers werkt de lokale api-aanroep niet — probeer het bestand te openen via de Files-app → Chrome.');
+      alert('❌ Worker URL of API-sleutel klopt niet. Controleer de Worker URL bovenaan de pagina.');
+    } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError') || msg.includes('CORS') || msg.includes('Load failed')) {
+      alert('❌ Verbindingsfout. Controleer:\n1. Heb je internet?\n2. Klopt de Worker URL bovenaan?\n3. Is de Cloudflare Worker actief?');
     } else {
       alert('❌ Er ging iets mis: ' + msg + '\n\nProbeer opnieuw.');
     }
@@ -670,15 +676,19 @@ Reageer ALLEEN met JSON (geen markdown):
 
 function opnieuw() {
   uploadedImageData = null;
+  // Reset upload UI
   document.getElementById('upload-sectie').style.display = 'block';
   document.getElementById('resultaat-sectie').style.display = 'none';
   document.getElementById('foto-preview').style.display = 'none';
+  document.getElementById('foto-preview').src = '';
   document.getElementById('beoordeel-btn').style.display = 'none';
   document.getElementById('beoordeel-btn').disabled = false;
   document.getElementById('beoordeel-btn').textContent = '✨ Laat beoordelen!';
   document.getElementById('andere-foto-btn').style.display = 'none';
   document.getElementById('foto-input-camera').value = '';
   document.getElementById('foto-input-galerij').value = '';
+  // Scroll terug naar boven zodat camera-knop zichtbaar is
+  window.scrollTo(0, 0);
 }
 
 // Init

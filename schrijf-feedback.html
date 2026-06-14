@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schrijf Superster — Feedback ✍️</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; min-height: 100vh; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .header { background: linear-gradient(135deg, #1e1b4b, #312e81); padding: 20px 16px; display: flex; align-items: center; gap: 12px; }
+  .back-btn { background: rgba(255,255,255,0.15); border: none; border-radius: 10px; padding: 8px 14px; color: white; font-size: 18px; cursor: pointer; }
+  .card { background: white; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  input[type=range] { width: 100%; accent-color: #7c3aed; }
+  textarea { width: 100%; border: 2px solid #e5e7eb; border-radius: 12px; padding: 12px; font-family: inherit; font-size: 14px; resize: vertical; outline: none; min-height: 100px; }
+  textarea:focus { border-color: #7c3aed; }
+  .btn { border: none; border-radius: 12px; padding: 13px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-primary { background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; width: 100%; }
+  .btn-secondary { background: #f3f4f6; color: #374151; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { width: 32px; height: 32px; border: 4px solid #e5e7eb; border-top-color: #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1e1b4b; color: white; padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 700; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
+  #toast.zichtbaar { opacity: 1; }
+  .score-ring { width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: white; flex-shrink: 0; }
+  /* FIX #11: badge voor pogingen met feedback */
+  .feedback-badge { background: #7c3aed; color: white; border-radius: 99px; padding: 2px 8px; font-size: 10px; font-weight: 700; display: inline-block; }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- WORKER URL SETUP -->
+<div style="background:#1e1b4b;padding:10px 14px;display:flex;align-items:center;gap:8px">
+  <span style="color:#a78bfa;font-size:12px;white-space:nowrap">🔗 Worker:</span>
+  <input id="worker-input" type="password" placeholder="https://mijn-worker.workers.dev"
+    style="flex:1;background:#312e81;border:1px solid #4c1d95;border-radius:8px;padding:6px 10px;color:white;font-size:12px;outline:none"
+    oninput="slaWorkerOp(this.value)">
+  <span id="worker-status" style="font-size:16px">❌</span>
+  <button onclick="laadAlles()" style="background:#4c1d95;border:none;border-radius:8px;padding:5px 10px;color:#a78bfa;font-size:11px;font-weight:700;cursor:pointer">🔄 Laden</button>
+</div>
+
+<!-- OVERZICHT -->
+<div id="overzicht" class="screen active">
+  <div class="header">
+    <div>
+      <h1 style="color:white;font-size:20px;font-weight:800">✍️ Feedback dashboard</h1>
+      <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:2px">Schrijf Superster v1.1</div>
+    </div>
+  </div>
+  <div style="padding:16px">
+    <!-- FIX #15: laadindicator meteen zichtbaar bij init -->
+    <div id="laad-spinner" style="text-align:center;padding:40px;display:none">
+      <div class="spinner"></div>
+      <div style="color:#9ca3af;font-size:13px;margin-top:12px">Laden...</div>
+    </div>
+    <div id="geen-gebruikers" style="display:none;text-align:center;padding:60px 20px;color:#9ca3af">
+      <div style="font-size:48px;margin-bottom:12px">👦</div>
+      <div style="font-weight:700;font-size:15px">Geen kinderen gevonden</div>
+      <div style="font-size:13px;margin-top:6px">Laat het kind eerst de app openen om een profiel aan te maken.</div>
+    </div>
+    <div id="gebruikers-lijst"></div>
+  </div>
+</div>
+
+<!-- KIND DETAIL: pogingen -->
+<div id="kind-detail" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="toonScherm('overzicht')">←</button>
+    <div>
+      <h1 id="kind-naam-header" style="color:white;font-size:20px;font-weight:800"></h1>
+      <div id="kind-stats-header" style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:2px"></div>
+    </div>
+  </div>
+  <div style="padding:14px 16px 0;display:flex;gap:8px;overflow-x:auto;padding-bottom:8px" id="opdracht-tabs"></div>
+  <div id="pogingen-lijst" style="padding:12px 16px;display:flex;flex-direction:column;gap:12px;padding-bottom:40px"></div>
+</div>
+
+<!-- FEEDBACK GEVEN -->
+<div id="feedback-scherm" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="toonScherm('kind-detail')">←</button>
+    <div>
+      <h1 style="color:white;font-size:18px;font-weight:800">Feedback geven</h1>
+      <div id="feedback-opdracht-naam" style="color:rgba(255,255,255,0.7);font-size:12px;margin-top:2px"></div>
+    </div>
+  </div>
+  <div style="padding:16px;padding-bottom:40px">
+    <!-- Foto -->
+    <div class="card" style="padding:0;overflow:hidden;margin-bottom:12px">
+      <img id="feedback-foto" src="" style="width:100%;max-height:280px;object-fit:cover;display:none">
+      <div id="feedback-foto-laden" style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">📷 Foto laden...</div>
+    </div>
+    <!-- AI beoordeling -->
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:10px">🤖 AI BEOORDELING</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div id="ai-score-ring" class="score-ring" style="background:#7c3aed">–</div>
+        <div style="flex:1"><div id="ai-hoofdboodschap" style="font-weight:700;color:#1e1b4b;font-size:14px;line-height:1.3"></div></div>
+      </div>
+      <div id="ai-compliment" style="background:#f0fdf4;border-radius:10px;padding:10px;margin-bottom:8px;font-size:13px;color:#166534;display:none"></div>
+      <div id="ai-tip" style="background:#fffbeb;border-radius:10px;padding:10px;font-size:13px;color:#78350f;display:none"></div>
+    </div>
+    <!-- Feedback formulier -->
+    <div class="card">
+      <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:14px">✏️ JOUW FEEDBACK</div>
+      <!-- Juf score slider -->
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <label style="font-size:13px;font-weight:700;color:#374151">Juf/meester score:</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div id="score-display" style="background:#7c3aed;color:white;border-radius:99px;padding:4px 16px;font-size:16px;font-weight:800;min-width:70px;text-align:center">–</div>
+            <button onclick="verwijderScore()" style="background:#f3f4f6;border:none;border-radius:8px;padding:4px 10px;font-size:12px;color:#9ca3af;cursor:pointer">Geen</button>
+          </div>
+        </div>
+        <!-- FIX #6: slider begint op AI-score (wordt ingesteld via openFeedback) -->
+        <input type="range" id="score-slider" min="0" max="100" value="70" oninput="updateScoreDisplay(this.value)">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#9ca3af;margin-top:4px">
+          <span>0</span><span style="color:#f59e0b;font-weight:700">40=⭐</span><span style="color:#10b981;font-weight:700">65=⭐⭐</span><span style="color:#7c3aed;font-weight:700">85=⭐⭐⭐</span><span>100</span>
+        </div>
+      </div>
+      <!-- Tekstfeedback -->
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700;color:#374151;display:block;margin-bottom:8px">Geschreven feedback:</label>
+        <textarea id="feedback-tekst" placeholder="Schrijf hier je feedback voor het kind..."></textarea>
+      </div>
+      <!-- FIX #14: snelle reacties met data-tekst attribuut zodat emoji niet mee wordt geplakt -->
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:#9ca3af;font-weight:600;margin-bottom:8px">Snelle reacties:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button onclick="voegSnelReactieToe(this)" data-tekst="Wat netjes!" class="btn btn-secondary" style="font-size:12px;padding:6px 12px">👏 Wat netjes!</button>
+          <button onclick="voegSnelReactieToe(this)" data-tekst="Goed je best gedaan!" class="btn btn-secondary" style="font-size:12px;padding:6px 12px">💪 Goed je best gedaan!</button>
+          <button onclick="voegSnelReactieToe(this)" data-tekst="Let op je stokken!" class="btn btn-secondary" style="font-size:12px;padding:6px 12px">⬆️ Let op je stokken!</button>
+          <button onclick="voegSnelReactieToe(this)" data-tekst="Schrijf op de lijn!" class="btn btn-secondary" style="font-size:12px;padding:6px 12px">📏 Schrijf op de lijn!</button>
+          <button onclick="voegSnelReactieToe(this)" data-tekst="Iets langzamer schrijven!" class="btn btn-secondary" style="font-size:12px;padding:6px 12px">🐢 Iets langzamer!</button>
+          <button onclick="voegSnelReactieToe(this)" data-tekst="Bijna perfect!" class="btn btn-secondary" style="font-size:12px;padding:6px 12px">✨ Bijna perfect!</button>
+        </div>
+      </div>
+      <button onclick="slaFeedbackOp()" class="btn btn-primary">💾 Feedback opslaan</button>
+    </div>
+    <!-- Bestaande feedback -->
+    <div id="bestaande-feedback" style="display:none" class="card">
+      <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:10px">📋 EERDER GEGEVEN FEEDBACK</div>
+      <div id="bestaande-feedback-inhoud"></div>
+      <button onclick="bewerkFeedback()" style="background:transparent;border:none;color:#7c3aed;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">✏️ Aanpassen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let workerUrl='';
+let huidigeGebruiker=null;
+let huidigePoging=null;
+let jufScore=null;
+let pogingFilter='alle';
+
+// FIX #10: datum correct formatteren
+function formatDatum(isoString){
+  const d=new Date(isoString);
+  return d.toLocaleDateString('nl-NL',{day:'numeric',month:'long'})+' om '+d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});
+}
+
+function slaWorkerOp(val){
+  workerUrl=val.trim();
+  localStorage.setItem('feedback_worker_url',workerUrl);
+  document.getElementById('worker-status').textContent=workerUrl.startsWith('https://')?'✅':'❌';
+}
+function toonToast(msg,duur=2500){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('zichtbaar');setTimeout(()=>t.classList.remove('zichtbaar'),duur);}
+function toonScherm(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);}
+
+async function workerFetch(pad,methode='GET',body=null){
+  if(!workerUrl||!workerUrl.startsWith('https://')){toonToast('❌ Vul eerst de Worker URL in');throw new Error('Geen Worker URL');}
+  const opts={method:methode,headers:{'Content-Type':'application/json'}};
+  if(body)opts.body=JSON.stringify(body);
+  const resp=await fetch(workerUrl.replace(/\/$/,'')+pad,opts);
+  if(!resp.ok){const err=await resp.json().catch(()=>({}));throw new Error(err.fout||`HTTP ${resp.status}`);}
+  return resp.json();
+}
+
+async function laadAlles(){
+  if(!workerUrl.startsWith('https://')){toonToast('❌ Vul eerst een geldige Worker URL in');return;}
+  // FIX #15: laadindicator meteen tonen
+  document.getElementById('laad-spinner').style.display='block';
+  document.getElementById('gebruikers-lijst').innerHTML='';
+  document.getElementById('geen-gebruikers').style.display='none';
+  try{
+    const gebruikers=await workerFetch('/gebruikers');
+    document.getElementById('laad-spinner').style.display='none';
+    if(!gebruikers||gebruikers.length===0){document.getElementById('geen-gebruikers').style.display='block';return;}
+    document.getElementById('gebruikers-lijst').innerHTML=gebruikers.map(g=>`
+      <div onclick="laadKind('${g.id}')" style="background:white;border-radius:16px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:2px solid transparent;transition:border-color 0.2s" onmouseover="this.style.borderColor='#a855f7'" onmouseout="this.style.borderColor='transparent'">
+        <div style="width:52px;height:52px;background:linear-gradient(135deg,#ede9fe,#dbeafe);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">${g.emoji}</div>
+        <div style="flex:1">
+          <div style="font-weight:800;color:#1e1b4b;font-size:16px">${g.naam}</div>
+          <div style="color:#9ca3af;font-size:12px;margin-top:2px">Aangemaakt: ${formatDatum(g.aangemaakt)}</div>
+        </div>
+        <span style="font-size:20px;color:#a855f7">›</span>
+      </div>`).join('');
+  }catch(e){document.getElementById('laad-spinner').style.display='none';toonToast('❌ Kon gebruikers niet laden');}
+}
+
+async function laadKind(gebruikerId){
+  huidigeGebruiker=null;pogingFilter='alle';
+  document.getElementById('pogingen-lijst').innerHTML='<div style="text-align:center;padding:30px"><div class="spinner"></div></div>';
+  document.getElementById('opdracht-tabs').innerHTML='';
+  toonScherm('kind-detail');
+  try{
+    const [profiel,pogingen]=await Promise.all([
+      workerFetch(`/gebruiker?id=${gebruikerId}`),
+      workerFetch(`/pogingen?gebruikerId=${gebruikerId}`)
+    ]);
+    // Haal feedback-status parallel op voor alle pogingen (voor FIX #11)
+    const feedbackStatussen=await Promise.all(pogingen.map(async p=>{
+      try{const fb=await workerFetch(`/feedback?pogingId=${p.id}`);return{pogingId:p.id,heeftFeedback:!!fb};}
+      catch(e){return{pogingId:p.id,heeftFeedback:false};}
+    }));
+    const feedbackMap=Object.fromEntries(feedbackStatussen.map(f=>[f.pogingId,f.heeftFeedback]));
+    huidigeGebruiker={...profiel,pogingen,feedbackMap};
+    document.getElementById('kind-naam-header').textContent=`${profiel.emoji} ${profiel.naam}`;
+    document.getElementById('kind-stats-header').textContent=`${pogingen.length} poging${pogingen.length!==1?'en':''} totaal`;
+    renderPogingen(pogingen,feedbackMap);
+  }catch(e){toonToast('❌ Kon gegevens niet laden');}
+}
+
+function renderPogingen(pogingen,feedbackMap){
+  feedbackMap=feedbackMap||huidigeGebruiker.feedbackMap||{};
+  const opdrachtenMetPogingen=[...new Set(pogingen.map(p=>p.opdrachtId))];
+  document.getElementById('opdracht-tabs').innerHTML=
+    [{id:'alle',titel:'Alle',emoji:'📋'},...opdrachtenMetPogingen.map(id=>{const p=pogingen.find(x=>x.opdrachtId===id);return{id,titel:p.opdrachtTitel,emoji:p.opdrachtEmoji};})].map(t=>`<button onclick="pogingFilter='${t.id}';renderPogingen(huidigeGebruiker.pogingen)" style="white-space:nowrap;background:${pogingFilter==t.id?'#312e81':'white'};color:${pogingFilter==t.id?'white':'#1e1b4b'};border:2px solid #312e81;border-radius:99px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">${t.emoji} ${t.titel}</button>`).join('');
+
+  const gef=pogingFilter==='alle'?pogingen:pogingen.filter(p=>String(p.opdrachtId)===String(pogingFilter));
+  if(gef.length===0){document.getElementById('pogingen-lijst').innerHTML='<div style="text-align:center;padding:40px;color:#9ca3af"><div style="font-size:36px">📝</div><div style="margin-top:8px;font-size:13px">Geen pogingen</div></div>';return;}
+
+  document.getElementById('pogingen-lijst').innerHTML=gef.map(p=>{
+    const scoreKleur=p.aiScore>=85?'#10b981':p.aiScore>=65?'#f59e0b':p.aiScore>=40?'#6366f1':'#ef4444';
+    // FIX #11: badge tonen als poging al feedback heeft
+    const heeftFeedback=feedbackMap[p.id]||p.heeftFeedback||false;
+    return`<div onclick="openFeedback('${p.id}')" style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);cursor:pointer;border:${heeftFeedback?'2px solid #a855f7':'2px solid transparent'};transition:border-color 0.2s" onmouseover="this.style.borderColor='#a855f7'" onmouseout="this.style.borderColor='${heeftFeedback?'#a855f7':'transparent'}'">
+      <div style="padding:14px;display:flex;align-items:center;gap:12px">
+        <div class="score-ring" style="background:${scoreKleur}">${p.aiScore}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-weight:800;color:#1e1b4b;font-size:14px">${p.opdrachtEmoji} ${p.opdrachtTitel}</span>
+            <!-- FIX #11: visuele badge als er feedback is -->
+            ${heeftFeedback?'<span class="feedback-badge">✅ Feedback gegeven</span>':'<span style="background:#f3f4f6;color:#9ca3af;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700">Nog geen feedback</span>'}
+          </div>
+          <!-- FIX #10: datum correct formatteren -->
+          <div style="color:#9ca3af;font-size:12px;margin-top:2px">${formatDatum(p.datum)}</div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px;font-style:italic">"${(p.aiHoofdBoodschap||'').slice(0,50)}${p.aiHoofdBoodschap&&p.aiHoofdBoodschap.length>50?'…':''}"</div>
+        </div>
+        <span style="font-size:20px;color:#a855f7">›</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openFeedback(pogingId){
+  huidigePoging=huidigeGebruiker.pogingen.find(p=>p.id===pogingId);
+  if(!huidigePoging)return;
+  jufScore=null;
+  document.getElementById('feedback-opdracht-naam').textContent=`${huidigePoging.opdrachtEmoji} ${huidigePoging.opdrachtTitel}`;
+  document.getElementById('score-display').textContent='–';
+  document.getElementById('feedback-tekst').value='';
+  document.getElementById('bestaande-feedback').style.display='none';
+
+  // AI info
+  document.getElementById('ai-score-ring').textContent=huidigePoging.aiScore||'–';
+  document.getElementById('ai-hoofdboodschap').textContent=huidigePoging.aiHoofdBoodschap||'';
+  const cEl=document.getElementById('ai-compliment');if(huidigePoging.aiCompliment){cEl.textContent='👏 '+huidigePoging.aiCompliment;cEl.style.display='block';}else cEl.style.display='none';
+  const tEl=document.getElementById('ai-tip');if(huidigePoging.aiTip){tEl.textContent='💡 '+huidigePoging.aiTip;tEl.style.display='block';}else tEl.style.display='none';
+
+  // FIX #6: slider begint op AI-score als startpunt
+  const startScore=huidigePoging.aiScore||70;
+  document.getElementById('score-slider').value=startScore;
+  // Slider staat klaar maar score is nog niet bevestigd — blijft '–' totdat gebruiker beweegt
+
+  // Foto laden
+  document.getElementById('feedback-foto').style.display='none';
+  document.getElementById('feedback-foto-laden').style.display='block';
+  document.getElementById('feedback-foto-laden').textContent='📷 Foto laden...';
+  if(huidigePoging.heeftFoto){
+    try{
+      const res=await workerFetch(`/foto?pogingId=${pogingId}`);
+      if(res.foto){document.getElementById('feedback-foto').src=res.foto;document.getElementById('feedback-foto').style.display='block';document.getElementById('feedback-foto-laden').style.display='none';}
+    }catch(e){document.getElementById('feedback-foto-laden').textContent='Foto niet beschikbaar';}
+  }else{document.getElementById('feedback-foto-laden').textContent='Geen foto beschikbaar';}
+
+  // Bestaande feedback ophalen
+  try{
+    const bestaande=await workerFetch(`/feedback?pogingId=${pogingId}`);
+    if(bestaande){
+      document.getElementById('bestaande-feedback').style.display='block';
+      document.getElementById('bestaande-feedback-inhoud').innerHTML=`
+        ${bestaande.jufScore!==null?`<div style="margin-bottom:8px"><span style="background:#7c3aed;color:white;border-radius:99px;padding:3px 14px;font-size:13px;font-weight:700">Juf score: ${bestaande.jufScore}/100</span></div>`:''}
+        ${bestaande.tekst?`<div style="font-size:13px;color:#374151;line-height:1.5">${bestaande.tekst}</div>`:'<div style="color:#9ca3af;font-size:13px">Geen tekstfeedback gegeven.</div>'}
+        <div style="font-size:11px;color:#9ca3af;margin-top:6px">${formatDatum(bestaande.datum)}</div>`;
+      // Pre-fill formulier met bestaande waarden
+      if(bestaande.jufScore!==null){
+        jufScore=bestaande.jufScore;
+        document.getElementById('score-slider').value=bestaande.jufScore;
+        document.getElementById('score-display').textContent=`${bestaande.jufScore}/100`;
+      }
+      if(bestaande.tekst)document.getElementById('feedback-tekst').value=bestaande.tekst;
+    }
+  }catch(e){}
+
+  toonScherm('feedback-scherm');
+}
+
+function updateScoreDisplay(val){jufScore=parseInt(val);document.getElementById('score-display').textContent=`${val}/100`;}
+function verwijderScore(){jufScore=null;document.getElementById('score-display').textContent='–';document.getElementById('score-slider').value=huidigePoging?.aiScore||70;}
+function bewerkFeedback(){document.getElementById('bestaande-feedback').style.display='none';}
+
+// FIX #14: gebruik data-tekst attribuut zodat alleen tekst (zonder emoji) in het veld terechtkomt
+function voegSnelReactieToe(btn){
+  const el=document.getElementById('feedback-tekst');
+  const tekst=btn.dataset.tekst||btn.textContent.trim();
+  el.value=(el.value?(el.value.endsWith(' ')?el.value:el.value+' '):'')+tekst;
+}
+
+async function slaFeedbackOp(){
+  if(!huidigePoging){toonToast('❌ Geen poging geselecteerd');return;}
+  const tekst=document.getElementById('feedback-tekst').value.trim();
+  if(jufScore===null&&!tekst){toonToast('❌ Geef een score of schrijf iets');return;}
+  try{
+    await workerFetch('/feedback','POST',{pogingId:huidigePoging.id,gebruikerId:huidigePoging.gebruikerId,jufScore,tekst});
+    // FIX #11: feedbackMap updaten zodat de badge meteen verschijnt bij terugkeer
+    if(huidigeGebruiker.feedbackMap)huidigeGebruiker.feedbackMap[huidigePoging.id]=true;
+    toonToast('✅ Feedback opgeslagen!');
+    setTimeout(()=>toonScherm('kind-detail'),1000);
+  }catch(e){toonToast('❌ Kon feedback niet opslaan: '+e.message);}
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+// FIX #15: laadindicator meteen tonen bij init als Worker URL al bekend is
+const opgeslagenWorker=localStorage.getItem('feedback_worker_url')||'';
+if(opgeslagenWorker){
+  workerUrl=opgeslagenWorker;
+  document.getElementById('worker-input').value=opgeslagenWorker;
+  document.getElementById('worker-status').textContent=opgeslagenWorker.startsWith('https://')?'✅':'❌';
+  if(opgeslagenWorker.startsWith('https://')){
+    document.getElementById('laad-spinner').style.display='block';
+    laadAlles();
+  }
+}
+</script>
+</body>
+</html>

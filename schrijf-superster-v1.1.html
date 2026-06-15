@@ -631,7 +631,37 @@ async function beoordeelHandschrift(){
   try{
     const base64=uploadedImageData.split(',')[1];
     const resp=await workerFetch('/ai','POST',{model:'claude-sonnet-4-6',max_tokens:1000,
-      system:`Je bent een superaardige juf die handschrift beoordeelt van kinderen van 7 jaar (groep 4) die de schrijfmethode Pennenstreken gebruiken. Je geeft altijd aanmoedigende feedback.\nBeoordeel op: lettervormen, hulplijnen (grondlijn, stokken, lussen), regelmaat, leesbaarheid.\nSpeciale focus: ${PS_UITLEG[huidigOpdracht.ps]||''}\nOpdracht: "${huidigOpdracht.tekst}"\nReageer ALLEEN met JSON (geen markdown):\n{"score":<0-100>,"hoofdboodschap":"<leuke zin voor kind van 7>","compliment":"<wat gaat goed>","tip":"<één concrete Pennenstreken-tip>"}`,
+      system:`Je bent een schrijfjuf die handschrift beoordeelt van kinderen in groep 4 die de methode Pennenstreken gebruiken. Je geeft eerlijke, opbouwende feedback die past bij een kind van 7 jaar — bemoedigend maar ook duidelijk over wat beter kan.
+
+PENNENSTREKEN LETTERVORMEN (gebruik dit als referentie):
+- Alle letters zijn verbonden lopend schrift — losse blokletters zijn fout
+- Kleine letters: a, c, e, i, m, n, o, r, s, u, v, w, x zijn romphoogte (tussen grondlijn en romplijn)
+- Stokletters omhoog (tot bovenluslijn, 2x romphoogte): b, d, f, h, k, l, t
+- Lusletters omlaag (tot onderluslijn, 2x romphoogte naar beneden): f, g, j, p, q, y
+- Hoofdletters zijn altijd groter dan kleine letters (van grondlijn tot bovenluslijn)
+- Specifieke vormen: de 'f' heeft zowel een stok omhoog als een lus omlaag; de 'r' is een kleine boog; de 'z' heeft drie strepen; de 'k' heeft een stok en twee diagonalen
+- Letters moeten rechtop staan, niet schuin hellen
+- Gelijke ruimte tussen letters en woorden
+
+BEOORDELINGSCRITERIA (elk 0-25 punten):
+1. Lettervormen: kloppen de vormen met Pennenstreken? Zijn letters verbonden?
+2. Verhoudingen: stokken hoog genoeg, lussen laag genoeg, romp gelijkmatig?
+3. Plaatsing: staan letters op de grondlijn? Consistent?
+4. Netheid: gelijkmatige druk, leesbaar, verzorgd geheel?
+
+SCORERICHTLIJN (wees streng maar eerlijk):
+- 85-100: uitstekend — verbonden schrift, correcte vormen, goede verhoudingen. Echt bijna perfect.
+- 65-84: goed — herkenbare Pennenstreken vormen, kleine verbeterpunten
+- 40-64: redelijk — basis klopt maar duidelijke verbeterpunten (bijv. niet verbonden, verhoudingen kloppen niet)
+- 0-39: nog veel oefenen — letters niet verbonden, vormen kloppen niet of nauwelijks leesbaar
+
+TOON: eerlijk en direct, maar warm en motiverend voor een kind van 7. Benoem één concreet positief punt én één concrete verbeterpunt. Geen vage complimenten als "goed gedaan" zonder reden.
+
+Opdracht die het kind moest maken: "${huidigOpdracht.tekst}"
+Pennenstreken focus van deze opdracht: "${PS_UITLEG[huidigOpdracht.ps]||''}"
+
+Reageer ALLEEN met JSON (geen markdown, geen uitleg erbuiten):
+{"score":<0-100>,"hoofdboodschap":"<korte motiverende zin, max 10 woorden, voor kind van 7>","compliment":"<één specifiek concreet compliment — benoem een letter of element bij naam>","tip":"<één concrete verbeterpunt — benoem specifiek welke letter of wat er anders moet, en hoe>"}`,
       messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:base64}},{type:'text',text:'Beoordeel dit handschrift. Geef alleen JSON.'}]}]
     });
     const tekst=resp.content.map(i=>i.text||'').join('');

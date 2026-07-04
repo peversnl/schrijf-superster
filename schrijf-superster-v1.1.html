@@ -754,6 +754,23 @@ Reageer ALLEEN met JSON (geen markdown, geen uitleg erbuiten):
 // ── INIT ──────────────────────────────────────────────────────
 async function init(){
   await openDB();
+
+  // Verborgen reset via URL-parameter: ?reset=profiel of ?reset=alles
+  const urlParams=new URLSearchParams(window.location.search);
+  const resetParam=urlParams.get('reset');
+  if(resetParam==='profiel'){
+    localStorage.removeItem('schrijf_gebruiker');
+    toonToast('✅ Profiel gereset — kies een nieuw profiel!');
+    // Verwijder de parameter uit de URL zodat hij niet bij vernieuwen opnieuw triggert
+    window.history.replaceState({},'',window.location.pathname);
+  } else if(resetParam==='alles'){
+    localStorage.removeItem('schrijf_gebruiker');
+    localStorage.removeItem('schrijf_voortgang_v11');
+    localStorage.removeItem('schrijf_api_key');
+    toonToast('✅ Alles gereset!');
+    window.history.replaceState({},'',window.location.pathname);
+  }
+
   laadVoortgang();
   const key=localStorage.getItem('schrijf_api_key')||'';
   if(key){
@@ -768,7 +785,6 @@ async function init(){
   if(opgeslagenGebruiker){
     try{
       gebruiker=JSON.parse(opgeslagenGebruiker);
-      // FIX #12: controleer of Worker URL geldig is voor we feedback ophalen
       if(apiKey&&apiKey.startsWith('https://')){
         updateProfielUI();
         controleerFeedback();
@@ -777,7 +793,6 @@ async function init(){
       }
     }catch(e){localStorage.removeItem('schrijf_gebruiker');}
   } else {
-    // Nieuw kind: toon overlay
     document.getElementById('profiel-overlay').style.display='flex';
   }
   renderHome();

@@ -60,6 +60,12 @@
       <div style="font-size:13px;margin-top:6px">Laat het kind eerst de app openen om een profiel aan te maken.</div>
     </div>
     <div id="gebruikers-lijst"></div>
+
+    <!-- Profielbeheer -->
+    <div id="profielbeheer-wrap" style="margin-top:24px;border-top:1px solid #e5e7eb;padding-top:16px;display:none">
+      <div style="font-size:12px;font-weight:700;color:#9ca3af;margin-bottom:12px">⚙️ PROFIELBEHEER</div>
+      <div id="profielbeheer-lijst"></div>
+    </div>
   </div>
 </div>
 
@@ -179,14 +185,16 @@ async function workerFetch(pad,methode='GET',body=null){
 
 async function laadAlles(){
   if(!workerUrl.startsWith('https://')){toonToast('❌ Vul eerst een geldige Worker URL in');return;}
-  // FIX #15: laadindicator meteen tonen
   document.getElementById('laad-spinner').style.display='block';
   document.getElementById('gebruikers-lijst').innerHTML='';
   document.getElementById('geen-gebruikers').style.display='none';
+  document.getElementById('profielbeheer-wrap').style.display='none';
   try{
     const gebruikers=await workerFetch('/gebruikers');
     document.getElementById('laad-spinner').style.display='none';
     if(!gebruikers||gebruikers.length===0){document.getElementById('geen-gebruikers').style.display='block';return;}
+
+    // Hoofdlijst: klik om pogingen te zien
     document.getElementById('gebruikers-lijst').innerHTML=gebruikers.map(g=>`
       <div onclick="laadKind('${g.id}')" style="background:white;border-radius:16px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.06);border:2px solid transparent;transition:border-color 0.2s" onmouseover="this.style.borderColor='#a855f7'" onmouseout="this.style.borderColor='transparent'">
         <div style="width:52px;height:52px;background:linear-gradient(135deg,#ede9fe,#dbeafe);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">${g.emoji}</div>
@@ -196,7 +204,35 @@ async function laadAlles(){
         </div>
         <span style="font-size:20px;color:#a855f7">›</span>
       </div>`).join('');
+
+    // Profielbeheer sectie
+    document.getElementById('profielbeheer-wrap').style.display='block';
+    document.getElementById('profielbeheer-lijst').innerHTML=gebruikers.map(g=>`
+      <div id="profiel-rij-${g.id}" style="background:#fef2f2;border:1px solid #fca5a5;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">${g.emoji}</span>
+        <div style="flex:1">
+          <div style="font-weight:700;color:#1e1b4b;font-size:13px">${g.naam}</div>
+          <div style="color:#9ca3af;font-size:11px">${formatDatum(g.aangemaakt)}</div>
+        </div>
+        <button onclick="verwijderProfiel('${g.id}','${g.naam}')" style="background:#ef4444;border:none;border-radius:8px;padding:6px 12px;color:white;font-size:12px;font-weight:700;cursor:pointer">🗑️ Verwijder</button>
+      </div>`).join('');
+
   }catch(e){document.getElementById('laad-spinner').style.display='none';toonToast('❌ Kon gebruikers niet laden');}
+}
+
+async function verwijderProfiel(gebruikerId, naam){
+  if(!confirm(`Weet je zeker dat je het profiel van "${naam}" wilt verwijderen?\n\nAlle pogingen en feedback worden ook verwijderd. Dit kan niet ongedaan worden gemaakt.`))return;
+  try{
+    await workerFetch('/gebruiker/verwijder','POST',{gebruikerId});
+    toonToast(`✅ Profiel van ${naam} verwijderd`);
+    // Verwijder rij uit UI zonder opnieuw te laden
+    const rij=document.getElementById(`profiel-rij-${gebruikerId}`);
+    if(rij)rij.remove();
+    // Verwijder ook uit de hoofdlijst
+    laadAlles();
+  }catch(e){
+    toonToast('❌ Kon profiel niet verwijderen: '+e.message);
+  }
 }
 
 async function laadKind(gebruikerId){

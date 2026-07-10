@@ -326,6 +326,8 @@ const OPDRACHTEN=[
 ];
 const BADGES=[{id:"eerste",emoji:"🎯",naam:"Eerste stap",beschrijving:"Je eerste opdracht gedaan!"},{id:"perfecte_een",emoji:"💎",naam:"Perfectionist",beschrijving:"3 sterren op één opdracht!"},{id:"alle_een_ster",emoji:"🌟",naam:"Alle opdrachten",beschrijving:"Elke opdracht minstens 1 ster!"},{id:"helft_drie",emoji:"🔥",naam:"Halve held",beschrijving:"9 opdrachten op 3 sterren!"},{id:"alle_drie",emoji:"👑",naam:"Schrijf Superster",beschrijving:"Alle 18 opdrachten op 3 sterren!"},{id:"verbetering",emoji:"💪",naam:"Doorzetter",beschrijving:"Je eigen score verbeterd!"},{id:"honderd",emoji:"💯",naam:"Honderd punten",beschrijving:"100 punten verzameld!"}];
 const MAX_SCORE=OPDRACHTEN.length*100;
+// Eén plek om het model te wijzigen bij een toekomstige upgrade
+const AI_MODEL='claude-sonnet-5';
 
 // ── STATE ─────────────────────────────────────────────────────
 let punten=0,besteScores={},behaaldeBadges=[],geschiedenis={};
@@ -394,7 +396,7 @@ async function workerFetch(pad,methode='GET',body=null){
 async function testVerbinding(){
   if(!apiKey||!apiKey.startsWith('https://')){toonToast('❌ Vul eerst een Worker URL in');return;}
   toonToast('🔌 Testen...');
-  try{await workerFetch('/ai','POST',{model:'claude-sonnet-5',max_tokens:5,messages:[{role:'user',content:'hi'}]});toonToast('✅ Verbinding werkt!');}
+  try{await workerFetch('/ai','POST',{model:AI_MODEL,max_tokens:5,messages:[{role:'user',content:'hi'}]});toonToast('✅ Verbinding werkt!');}
   catch(e){toonToast('❌ Geen verbinding met Worker');}
 }
 
@@ -663,7 +665,7 @@ async function beoordeelHandschrift(){
   let resultaat=null;
   try{
     const base64=uploadedImageData.split(',')[1];
-    const resp=await workerFetch('/ai','POST',{model:'claude-sonnet-4-6',max_tokens:1000,
+    const resp=await workerFetch('/ai','POST',{model:AI_MODEL,max_tokens:1000,
       system:`Je bent een schrijfjuf die handschrift beoordeelt van kinderen in groep 4 die de methode Pennenstreken gebruiken. Je geeft eerlijke, opbouwende feedback die past bij een kind van 7 jaar — bemoedigend maar ook duidelijk over wat beter kan.
 
 PENNENSTREKEN LETTERVORMEN (gebruik dit als referentie):

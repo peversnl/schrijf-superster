@@ -394,7 +394,7 @@ async function workerFetch(pad,methode='GET',body=null){
 async function testVerbinding(){
   if(!apiKey||!apiKey.startsWith('https://')){toonToast('❌ Vul eerst een Worker URL in');return;}
   toonToast('🔌 Testen...');
-  try{await workerFetch('/ai','POST',{model:'claude-sonnet-4-6',max_tokens:5,messages:[{role:'user',content:'hi'}]});toonToast('✅ Verbinding werkt!');}
+  try{await workerFetch('/ai','POST',{model:'claude-sonnet-5',max_tokens:5,messages:[{role:'user',content:'hi'}]});toonToast('✅ Verbinding werkt!');}
   catch(e){toonToast('❌ Geen verbinding met Worker');}
 }
 

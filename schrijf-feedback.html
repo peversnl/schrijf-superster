@@ -125,6 +125,29 @@
           <span>0</span><span style="color:#f59e0b;font-weight:700">40=⭐</span><span style="color:#10b981;font-weight:700">65=⭐⭐</span><span style="color:#7c3aed;font-weight:700">85=⭐⭐⭐</span><span>100</span>
         </div>
       </div>
+      <!-- Stappenkaart checkboxes -->
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:700;color:#374151;display:block;margin-bottom:8px">💗 Stappenkaart check:</label>
+        <div style="background:#fdf2f8;border:2px solid #f9a8d4;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" id="stap1" onchange="updateStappenInTekst()" style="width:18px;height:18px;accent-color:#ec4899;flex-shrink:0">
+            <span style="font-size:13px;color:#831843">✅ Zit goed en hand op het schrift</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" id="stap2" onchange="updateStappenInTekst()" style="width:18px;height:18px;accent-color:#ec4899;flex-shrink:0">
+            <span style="font-size:13px;color:#831843">✅ Letters tussen de lijnen</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" id="stap3" onchange="updateStappenInTekst()" style="width:18px;height:18px;accent-color:#ec4899;flex-shrink:0">
+            <span style="font-size:13px;color:#831843">✅ Letters niet teveel op elkaar</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" id="stap4" onchange="updateStappenInTekst()" style="width:18px;height:18px;accent-color:#ec4899;flex-shrink:0">
+            <span style="font-size:13px;color:#831843">✅ Punten en streepjes als laatste</span>
+          </label>
+        </div>
+      </div>
+
       <!-- Tekstfeedback -->
       <div style="margin-bottom:16px">
         <label style="font-size:13px;font-weight:700;color:#374151;display:block;margin-bottom:8px">Geschreven feedback:</label>
@@ -298,6 +321,7 @@ async function openFeedback(pogingId){
   document.getElementById('score-display').textContent='–';
   document.getElementById('feedback-tekst').value='';
   document.getElementById('bestaande-feedback').style.display='none';
+  resetStappenCheckboxes();
 
   // AI info
   document.getElementById('ai-score-ring').textContent=huidigePoging.aiScore||'–';
@@ -343,6 +367,33 @@ async function openFeedback(pogingId){
   toonScherm('feedback-scherm');
 }
 
+function updateStappenInTekst(){
+  // Voeg aangevinkte stappen toe als prefix aan de feedback tekst — alleen als tekstveld leeg is
+  const stappen=[
+    {id:'stap1',tekst:'Goed: je zat goed en had je hand op het schrift!'},
+    {id:'stap2',tekst:'Goed: je letters staan tussen de lijnen!'},
+    {id:'stap3',tekst:'Goed: je letters staan niet te dicht op elkaar!'},
+    {id:'stap4',tekst:'Goed: je punten en streepjes heb je als laatste geschreven!'},
+  ];
+  const aangevinkt=stappen.filter(s=>document.getElementById(s.id)?.checked).map(s=>s.tekst);
+  if(aangevinkt.length===0)return;
+  const el=document.getElementById('feedback-tekst');
+  // Alleen toevoegen als de tekst nog leeg is of alleen stappen bevat
+  const huidige=el.value.trim();
+  const alleenStappen=stappen.map(s=>s.tekst);
+  const regels=huidige.split('\n').filter(r=>r.trim());
+  const isAlleenStappen=regels.every(r=>alleenStappen.includes(r.trim()));
+  if(!huidige||isAlleenStappen){
+    el.value=aangevinkt.join('\n');
+  }
+}
+
+function resetStappenCheckboxes(){
+  ['stap1','stap2','stap3','stap4'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.checked=false;
+  });
+}
 function updateScoreDisplay(val){jufScore=parseInt(val);document.getElementById('score-display').textContent=`${val}/100`;}
 function verwijderScore(){jufScore=null;document.getElementById('score-display').textContent='–';document.getElementById('score-slider').value=huidigePoging?.aiScore||70;}
 function bewerkFeedback(){document.getElementById('bestaande-feedback').style.display='none';}

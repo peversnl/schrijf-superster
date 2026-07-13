@@ -169,7 +169,30 @@
     <button onclick="filterOpdrachten('1')" id="tab-1" style="background:white;color:#4c1d95;border:2px solid #7c3aed;border-radius:99px;padding:6px 16px;font-size:12px;font-weight:700">Makkelijk</button>
     <button onclick="filterOpdrachten('2')" id="tab-2" style="background:white;color:#4c1d95;border:2px solid #7c3aed;border-radius:99px;padding:6px 16px;font-size:12px;font-weight:700">Middel</button>
     <button onclick="filterOpdrachten('3')" id="tab-3" style="background:white;color:#4c1d95;border:2px solid #7c3aed;border-radius:99px;padding:6px 16px;font-size:12px;font-weight:700">Moeilijk</button>
+    <button onclick="filterOpdrachten('nieuw')" id="tab-nieuw" style="background:white;color:#059669;border:2px solid #10b981;border-radius:99px;padding:6px 16px;font-size:12px;font-weight:700">🆕 Nog te doen</button>
   </div>
+
+  <!-- Genereer nieuwe opdrachten -->
+  <div style="padding:12px 16px 0">
+    <button id="genereer-toggle-btn" onclick="toonGenereerPaneel()" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:14px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(16,185,129,0.25)">
+      ✨ Nieuwe opdrachten maken
+    </button>
+    <div id="genereer-paneel" style="display:none;background:white;border-radius:16px;padding:14px;margin-top:10px;box-shadow:0 2px 12px rgba(16,185,129,0.15)">
+      <div style="font-size:12px;font-weight:700;color:#059669;margin-bottom:10px">Kies het niveau:</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button onclick="kiesGenereerNiveau(1,this)" class="genereer-niveau-btn" style="flex:1;min-width:70px;background:#dcfce7;border:2px solid #10b981;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;color:#166534;cursor:pointer">Makkelijk</button>
+        <button onclick="kiesGenereerNiveau(2,this)" class="genereer-niveau-btn" style="flex:1;min-width:70px;background:white;border:2px solid #e5e7eb;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;color:#374151;cursor:pointer">Middel</button>
+        <button onclick="kiesGenereerNiveau(3,this)" class="genereer-niveau-btn" style="flex:1;min-width:70px;background:white;border:2px solid #e5e7eb;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;color:#374151;cursor:pointer">Moeilijk</button>
+        <button onclick="kiesGenereerNiveau('willekeurig',this)" class="genereer-niveau-btn" style="flex:1;min-width:70px;background:white;border:2px solid #e5e7eb;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;color:#374151;cursor:pointer">🎲 Verrassing</button>
+      </div>
+      <button onclick="genereerOpdrachten()" id="genereer-btn" style="width:100%;background:linear-gradient(135deg,#10b981,#059669);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:800;cursor:pointer">Genereer 3 nieuwe opdrachten</button>
+      <div id="genereer-laden" style="display:none;text-align:center;padding:16px 0">
+        <div class="spinner" style="width:32px;height:32px;border-width:4px;margin:0 auto"></div>
+        <div style="font-size:12px;color:#059669;font-weight:700;margin-top:8px">Even geduld, nieuwe opdrachten worden bedacht...</div>
+      </div>
+    </div>
+  </div>
+
   <div id="opdrachten-lijst" style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;padding-bottom:32px"></div>
 </div>
 
@@ -323,8 +346,22 @@ const OPDRACHTEN=[
   {id:16,titel:"Kleuren schrijven",tekst:"Schrijf: 'rood, blauw, geel, groen, roze'.",emoji:"🎨",moeilijk:1,ps:"hulplijnen",tips:["Verbind alle letters vloeiend — geen losse letters ertussen","De oe in 'rood' en 'roze': schrijf de o en e dicht tegen elkaar","Begin elk woord op de grondlijn"]},
   {id:17,titel:"Mijn naam groot en klein",tekst:"Schrijf je voornaam eerst in kleine letters, dan met een hoofdletter ervoor.",emoji:"🏷️",moeilijk:1,ps:"hoofdletters",tips:["Kleine letters zijn even hoog — geen enkeling die uitsteekt","De hoofdletter is groter dan alle kleine letters erna","Schrijf beide keren netjes op de lijn"]},
   {id:18,titel:"Cijfers in woorden",tekst:"Schrijf: 'een, twee, drie, vier, vijf'.",emoji:"🔢",moeilijk:1,ps:"hulplijnen",tips:["'twee' heeft een lange ee — maak beide e's even groot","'vijf' eindigt op een f — die heeft een stok én een lus!","Schrijf elk telwoord op een aparte regel"]},
+
+  // ── NIEUWE OPDRACHTEN: MEDIUM ─────────────────────────────────
+  {id:19,titel:"Dubbele letters",tekst:"Schrijf 3 keer: 'appel, mannen, kussen'. Let op de dubbele letters!",emoji:"🔁",moeilijk:2,ps:"hulplijnen",tips:["De twee dezelfde letters naast elkaar zijn precies even groot","Verbind ze net zo vloeiend als andere letters","Schrijf niet te snel over de dubbele letter heen"]},
+  {id:20,titel:"Een vraag stellen",tekst:"Schrijf: 'Ga je mee naar buiten spelen?'",emoji:"❓",moeilijk:2,ps:"hoofdletters",tips:["De G is een hoofdletter — groter dan de kleine letters erna","Het vraagteken zet je direct na het laatste woord, geen spatie ervoor","Schrijf de hele zin in één vloeiende lijn letters"]},
+  {id:21,titel:"Boerderijdieren",tekst:"Schrijf: 'de koe, het schaap, de kip, het paard'.",emoji:"🐄",moeilijk:2,ps:"hulplijnen",tips:["Let op het verschil tussen 'de' en 'het' — schrijf ze goed over","De p in 'schaap' en 'paard' heeft een lus naar beneden","Laat een kleine pauze zien bij elke komma tussen de woorden"]},
+  {id:22,titel:"Moeilijke letters oefenen",tekst:"Schrijf 3 keer: 'de xylofoon, de taxi, de zebra'. Let op de x en z!",emoji:"🦓",moeilijk:2,ps:"stokkenLussen",tips:["De x bestaat uit twee kruisende strepen — schrijf ze toch in verbonden schrift","De z heeft drie strepen: boven, diagonaal, onder","Schrijf rustig, deze letters komen niet vaak voor"]},
+  {id:23,titel:"Een hele zin",tekst:"Schrijf: 'Het is vandaag lekker zonnig weer!'",emoji:"☀️",moeilijk:2,ps:"hulplijnen",tips:["Hoofdletter H aan het begin, uitroepteken aan het eind","Let op de stok van de 'l' in 'lekker' en de lus van de 'g' in 'vandaag'","Schrijf de hele zin op één regel als dat lukt"]},
+
+  // ── NIEUWE OPDRACHTEN: MOEILIJK ────────────────────────────────
+  {id:24,titel:"Getallen elf tot twintig",tekst:"Schrijf de getallen elf tot en met twintig voluit in woorden.",emoji:"🔟",moeilijk:3,ps:"hulplijnen",tips:["Elk getalwoord op een eigen regel","Let op de lange woorden zoals 'zeventien' en 'negentien'","Schrijf rustig door, ook bij de langere woorden"]},
+  {id:25,titel:"Zin met een komma",tekst:"Schrijf: 'Eerst eet ik mijn brood, daarna ga ik buiten spelen.'",emoji:"🍞",moeilijk:3,ps:"hulplijnen",tips:["De komma komt direct na 'brood', geen spatie ervoor","Check alle stokken (b, d, l) en lussen (g) in de zin","Hoofdletter E aan het begin, punt aan het eind"]},
+  {id:26,titel:"Alle lussen in één zin",tekst:"Schrijf: 'De jongen ging gisteren happig pompoenen kopen.'",emoji:"🎃",moeilijk:3,ps:"stokkenLussen",tips:["Deze zin heeft heel veel lusletters: g, j, p — check ze allemaal!","Elke lus gaat mooi naar beneden tot onder de lijn","Schrijf niet te snel — met zoveel lussen is rust belangrijk"]},
+  {id:27,titel:"Mijn weekverslag",tekst:"Schrijf 2 of 3 zinnen over wat je deze week hebt gedaan op school.",emoji:"📖",moeilijk:3,ps:"hoofdletters",tips:["Begin elke zin met een hoofdletter en eindig met een punt","Denk aan de Stappenkaart: hand op het schrift, rustig schrijven","Dit is een lang stuk — neem gerust een korte pauze halverwege"]},
+  {id:28,titel:"Superuitdaging",tekst:"Schrijf: 'Pa's wijze zoon lustte graag verse jam op zijn brood.'",emoji:"🏅",moeilijk:3,ps:"stokkenLussen",tips:["Deze zin heeft bijna alle soorten letters: stokken, lussen én hoofdletters","Ga rustig letter voor letter — dit is de moeilijkste opdracht!","Check op het eind: staan alle letters netjes op de lijn?"]},
 ];
-const BADGES=[{id:"eerste",emoji:"🎯",naam:"Eerste stap",beschrijving:"Je eerste opdracht gedaan!"},{id:"perfecte_een",emoji:"💎",naam:"Perfectionist",beschrijving:"3 sterren op één opdracht!"},{id:"alle_een_ster",emoji:"🌟",naam:"Alle opdrachten",beschrijving:"Elke opdracht minstens 1 ster!"},{id:"helft_drie",emoji:"🔥",naam:"Halve held",beschrijving:"9 opdrachten op 3 sterren!"},{id:"alle_drie",emoji:"👑",naam:"Schrijf Superster",beschrijving:"Alle 18 opdrachten op 3 sterren!"},{id:"verbetering",emoji:"💪",naam:"Doorzetter",beschrijving:"Je eigen score verbeterd!"},{id:"honderd",emoji:"💯",naam:"Honderd punten",beschrijving:"100 punten verzameld!"}];
+const BADGES=[{id:"eerste",emoji:"🎯",naam:"Eerste stap",beschrijving:"Je eerste opdracht gedaan!"},{id:"perfecte_een",emoji:"💎",naam:"Perfectionist",beschrijving:"3 sterren op één opdracht!"},{id:"alle_een_ster",emoji:"🌟",naam:"Alle opdrachten",beschrijving:"Elke opdracht minstens 1 ster!"},{id:"helft_drie",emoji:"🔥",naam:"Halve held",beschrijving:"14 opdrachten op 3 sterren!"},{id:"alle_drie",emoji:"👑",naam:"Schrijf Superster",beschrijving:"Alle 28 opdrachten op 3 sterren!"},{id:"verbetering",emoji:"💪",naam:"Doorzetter",beschrijving:"Je eigen score verbeterd!"},{id:"honderd",emoji:"💯",naam:"Honderd punten",beschrijving:"100 punten verzameld!"}];
 const MAX_SCORE=OPDRACHTEN.length*100;
 // Eén plek om het model te wijzigen bij een toekomstige upgrade
 const AI_MODEL='claude-sonnet-5';
@@ -336,6 +373,102 @@ let uploadedImageData=null,apiKey='';
 let gebruiker=null;
 let huidigePogingId=null;
 let gekozenEmoji='⭐';
+let aangemaakteOpdrachten=[]; // AI-gegenereerde extra opdrachten (naast de vaste 28)
+let genereerNiveau=1;
+
+// ── CUSTOM OPDRACHTEN (AI-gegenereerd) ────────────────────────
+function alleOpdrachten(){ return [...OPDRACHTEN, ...aangemaakteOpdrachten]; }
+
+function slaCustomOpdrachtenOp(){
+  try{ localStorage.setItem('schrijf_custom_opdrachten_v11', JSON.stringify(aangemaakteOpdrachten)); }
+  catch(e){ toonToast('⚠️ Kon nieuwe opdrachten niet opslaan'); }
+}
+function laadCustomOpdrachten(){
+  try{
+    const r=localStorage.getItem('schrijf_custom_opdrachten_v11');
+    aangemaakteOpdrachten = r ? JSON.parse(r) : [];
+  }catch(e){ aangemaakteOpdrachten=[]; }
+}
+
+function toonGenereerPaneel(){
+  const paneel=document.getElementById('genereer-paneel');
+  paneel.style.display = paneel.style.display==='none' ? 'block' : 'none';
+}
+function kiesGenereerNiveau(niveau, btn){
+  genereerNiveau=niveau;
+  document.querySelectorAll('.genereer-niveau-btn').forEach(b=>{b.style.background='white';b.style.borderColor='#e5e7eb';b.style.color='#374151';});
+  btn.style.background='#dcfce7'; btn.style.borderColor='#10b981'; btn.style.color='#166534';
+}
+
+async function genereerOpdrachten(){
+  if(!apiKey||!apiKey.startsWith('https://')){toonToast('❌ Vul eerst de Worker URL in');return;}
+  document.getElementById('genereer-btn').style.display='none';
+  document.getElementById('genereer-laden').style.display='block';
+
+  const niveauTekst = genereerNiveau==='willekeurig'
+    ? 'een mix: verdeel de 3 opdrachten over makkelijk, middel en moeilijk'
+    : genereerNiveau===1 ? 'makkelijk (niveau 1)' : genereerNiveau===2 ? 'middel (niveau 2)' : 'moeilijk (niveau 3)';
+  const bestaandeTitels = alleOpdrachten().map(o=>o.titel).join(', ');
+
+  try{
+    const resp = await workerFetch('/ai','POST',{
+      model:AI_MODEL, max_tokens:1500,
+      system:`Je bedenkt nieuwe schrijfoefeningen voor kinderen in groep 4 die de methode Pennenstreken gebruiken (Nederlands, verbonden lopend schrift).
+
+Bedenk 3 NIEUWE, unieke schrijfopdrachten op niveau: ${niveauTekst}.
+
+Deze titels bestaan al — verzin GEEN vergelijkbare opdrachten: ${bestaandeTitels}
+
+Elke opdracht moet:
+- Een leuk, kindvriendelijk thema hebben (dieren, sport, eten, familie, seizoenen, ruimte, etc.)
+- Een korte, duidelijke instructie geven (wat moet het kind precies schrijven)
+- Passen bij Pennenstreken: kies voor het 'ps' veld één van exact deze waarden: "pengreep", "zithouding", "hulplijnen", "stokkenLussen", "hoofdletters"
+- Een passend emoji hebben
+- Precies 3 korte, concrete tips bevatten die passen bij Pennenstreken en bij het gekozen 'ps' veld
+
+Moeilijkheidsniveau (moeilijk veld, geheel getal): 1=makkelijk (losse woorden), 2=middel (langere woorden of korte zin), 3=moeilijk (hele zin met interpunctie of langere tekst)
+
+Reageer ALLEEN met een JSON array (geen markdown, geen uitleg, geen tekst ervoor of erna), exact dit formaat:
+[{"titel":"...","tekst":"...","emoji":"...","moeilijk":<1,2 of 3>,"ps":"...","tips":["...","...","..."]}]`,
+      messages:[{role:'user',content:'Genereer 3 nieuwe opdrachten volgens de instructies.'}]
+    });
+    const tekst = resp.content.map(i=>i.text||'').join('');
+    const schoon = tekst.replace(/```json|```/g,'').trim();
+    const nieuwe = JSON.parse(schoon);
+    if(!Array.isArray(nieuwe)||nieuwe.length===0) throw new Error('Geen geldige opdrachten ontvangen');
+
+    const basisTijd=Date.now();
+    nieuwe.forEach((o,i)=>{
+      aangemaakteOpdrachten.push({
+        id: basisTijd+i,
+        titel: o.titel||'Nieuwe opdracht',
+        tekst: o.tekst||'',
+        emoji: o.emoji||'✍️',
+        moeilijk: [1,2,3].includes(o.moeilijk) ? o.moeilijk : 1,
+        ps: PS_UITLEG[o.ps] ? o.ps : null,
+        tips: Array.isArray(o.tips) ? o.tips.slice(0,3) : [],
+        aangemaakt: true,
+        toegevoegdOp: new Date().toISOString(),
+      });
+    });
+    slaCustomOpdrachtenOp();
+    document.getElementById('genereer-paneel').style.display='none';
+    toonToast(`✅ ${nieuwe.length} nieuwe opdrachten toegevoegd!`);
+    filterOpdrachten('nieuw');
+  }catch(e){
+    toonToast('❌ Kon geen nieuwe opdrachten maken: '+(e.message||'').slice(0,50),3500);
+  }
+  document.getElementById('genereer-btn').style.display='block';
+  document.getElementById('genereer-laden').style.display='none';
+}
+
+function verwijderCustomOpdracht(id){
+  if(!confirm('Deze zelfgemaakte opdracht verwijderen?\n\nEventuele scores en pogingen op deze opdracht blijven in je geschiedenis staan, maar de opdracht zelf verdwijnt uit de lijst.'))return;
+  aangemaakteOpdrachten = aangemaakteOpdrachten.filter(o=>o.id!==id);
+  slaCustomOpdrachtenOp();
+  renderOpdrachten();
+  toonToast('🗑️ Opdracht verwijderd');
+}
 
 // ── INDEXEDDB ─────────────────────────────────────────────────
 let db=null;
@@ -479,12 +612,14 @@ function toonScherm(id,van){
 
 // ── RENDER HOME ───────────────────────────────────────────────
 function renderHome(){
-  const totaal=OPDRACHTEN.reduce((a,o)=>a+(besteScores[o.id]||0),0);
-  const ts=OPDRACHTEN.reduce((a,o)=>a+scoreNaarSterren(besteScores[o.id]||0),0);
-  const pct=Math.round(totaal/MAX_SCORE*100);
-  document.getElementById('home-totaal').textContent=`${totaal} / ${MAX_SCORE}`;
+  const opdrachten=alleOpdrachten();
+  const maxScoreDynamisch=opdrachten.length*100;
+  const totaal=opdrachten.reduce((a,o)=>a+(besteScores[o.id]||0),0);
+  const ts=opdrachten.reduce((a,o)=>a+scoreNaarSterren(besteScores[o.id]||0),0);
+  const pct=Math.round(totaal/maxScoreDynamisch*100);
+  document.getElementById('home-totaal').textContent=`${totaal} / ${maxScoreDynamisch}`;
   document.getElementById('home-voortgang-bar').style.width=pct+'%';
-  document.getElementById('home-sterren-tekst').textContent=`${pct}% · ${ts}/${OPDRACHTEN.length*3} sterren`;
+  document.getElementById('home-sterren-tekst').textContent=`${pct}% · ${ts}/${opdrachten.length*3} sterren`;
   const level=LEVELS.filter(l=>l.puntenNodig<=punten).at(-1);
   const next=LEVELS.find(l=>l.puntenNodig>punten);
   const lp=next?Math.min(100,Math.round((punten-level.puntenNodig)/(next.puntenNodig-level.puntenNodig)*100)):100;
@@ -492,10 +627,11 @@ function renderHome(){
   document.getElementById('home-level-naam').textContent=`${level.naam} · ${punten} punten`;
   document.getElementById('home-level-bar').style.width=lp+'%';
   document.getElementById('home-level-next').textContent=next?`→ ${next.naam}`:'🎉 Max!';
-  document.getElementById('home-grid').innerHTML=OPDRACHTEN.map(o=>{
+  document.getElementById('home-grid').innerHTML=opdrachten.map(o=>{
     const score=besteScores[o.id]||0,s=scoreNaarSterren(score),gespeeld=!!besteScores[o.id];
-    return`<button onclick="startOpdracht(${o.id})" style="background:white;border:${s===3?'2px solid #fbbf24':'2px solid transparent'};border-radius:16px;padding:12px 10px;text-align:left;cursor:pointer;box-shadow:0 2px 10px rgba(124,58,237,0.08)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start"><span style="font-size:24px">${o.emoji}</span>${gespeeld?sterrenHTML(score):'<span style="font-size:11px;color:#d1d5db;font-weight:600">Nog doen!</span>'}</div>
+    return`<button onclick="startOpdracht(${o.id})" style="background:white;border:${s===3?'2px solid #fbbf24':gespeeld?'2px solid transparent':'2px solid #86efac'};border-radius:16px;padding:12px 10px;text-align:left;cursor:pointer;box-shadow:0 2px 10px rgba(124,58,237,0.08);position:relative">
+      ${!gespeeld?'<span style="position:absolute;top:-6px;right:8px;background:#10b981;color:white;font-size:9px;font-weight:800;padding:2px 8px;border-radius:99px">NIEUW</span>':''}
+      <div style="display:flex;justify-content:space-between;align-items:flex-start"><span style="font-size:24px">${o.emoji}</span>${gespeeld?sterrenHTML(score):''}</div>
       <div style="font-weight:700;color:#1e1b4b;font-size:13px;margin-top:6px">${o.titel}</div>
       <div style="font-size:11px;margin-top:2px;${s===3?'color:#d97706;font-weight:700':'color:#9ca3af'}">${gespeeld?(s===3?'✨ Perfect!':`Score: ${score} · Beter kan!`):'Tap om te beginnen →'}</div>
     </button>`;
@@ -508,22 +644,35 @@ function resetAlles(){punten=0;besteScores={};behaaldeBadges=[];geschiedenis={};
 
 // ── RENDER OPDRACHTEN ─────────────────────────────────────────
 function renderOpdrachten(){
-  const ts=OPDRACHTEN.reduce((a,o)=>a+scoreNaarSterren(besteScores[o.id]||0),0);
-  document.getElementById('opdrachten-subtitel').textContent=`${ts}/${OPDRACHTEN.length*3} sterren`;
-  const gef=huidigFilter==='alle'?OPDRACHTEN:OPDRACHTEN.filter(o=>o.moeilijk===parseInt(huidigFilter));
+  const opdrachten=alleOpdrachten();
+  const ts=opdrachten.reduce((a,o)=>a+scoreNaarSterren(besteScores[o.id]||0),0);
+  document.getElementById('opdrachten-subtitel').textContent=`${ts}/${opdrachten.length*3} sterren`;
+  const gef=huidigFilter==='alle' ? opdrachten
+    : huidigFilter==='nieuw' ? opdrachten.filter(o=>!besteScores[o.id])
+    : opdrachten.filter(o=>o.moeilijk===parseInt(huidigFilter));
+
+  if(gef.length===0 && huidigFilter==='nieuw'){
+    document.getElementById('opdrachten-lijst').innerHTML=`<div style="text-align:center;padding:40px 20px;color:#9ca3af"><div style="font-size:48px;margin-bottom:12px">🎉</div><div style="font-weight:700;font-size:15px">Alles gedaan!</div><div style="font-size:13px;margin-top:6px">Maak hierboven nieuwe opdrachten om verder te oefenen.</div></div>`;
+    return;
+  }
+
   document.getElementById('opdrachten-lijst').innerHTML=gef.map(o=>{
     const score=besteScores[o.id]||0,s=scoreNaarSterren(score),gespeeld=!!besteScores[o.id],vol=s<3?(s===0?40:s===1?65:85):null;
-    return`<button onclick="startOpdracht(${o.id})" style="background:white;border:${s===3?'2px solid #fbbf24':'2px solid transparent'};border-radius:20px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 2px 14px rgba(124,58,237,0.1);text-align:left;width:100%">
-      <span style="font-size:34px">${o.emoji}</span>
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap"><span style="font-weight:800;color:#1e1b4b;font-size:15px">${o.titel}</span>${moeilijkBadgeHTML(o.moeilijk)}${o.ps?`<span class="badge-ps">${PS_ICOON[o.ps]} ${PS_NAAM[o.ps]}</span>`:''}</div>
-        <div style="color:#6b7280;font-size:12px;margin-bottom:4px">${o.tekst.slice(0,42)}…</div>
-        ${gespeeld?`<div style="display:flex;align-items:center;gap:8px">${sterrenHTML(score)}<span style="font-size:12px;font-weight:700;color:#7c3aed">${score}/100</span>${vol?`<span style="font-size:11px;color:#9ca3af">· Doel: ${vol}+ voor ${s+1}⭐</span>`:'<span style="font-size:11px;color:#d97706;font-weight:700">✨ Topprestatie!</span>'}</div>`:`<span style="font-size:12px;color:#a78bfa;font-weight:700">Nog niet gedaan — doe het nu!</span>`}
-      </div><span style="font-size:20px;color:#a855f7">›</span>
-    </button>`;
+    return`<div style="position:relative">
+      ${!gespeeld?'<span style="position:absolute;top:-6px;left:12px;background:#10b981;color:white;font-size:9px;font-weight:800;padding:2px 8px;border-radius:99px;z-index:1">NIEUW</span>':''}
+      <button onclick="startOpdracht(${o.id})" style="background:white;border:${s===3?'2px solid #fbbf24':gespeeld?'2px solid transparent':'2px solid #86efac'};border-radius:20px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 2px 14px rgba(124,58,237,0.1);text-align:left;width:100%">
+        <span style="font-size:34px">${o.emoji}</span>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap"><span style="font-weight:800;color:#1e1b4b;font-size:15px">${o.titel}</span>${moeilijkBadgeHTML(o.moeilijk)}${o.ps?`<span class="badge-ps">${PS_ICOON[o.ps]} ${PS_NAAM[o.ps]}</span>`:''}${o.aangemaakt?'<span style="background:#ede9fe;color:#7c3aed;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700">✨ Zelfgemaakt</span>':''}</div>
+          <div style="color:#6b7280;font-size:12px;margin-bottom:4px">${o.tekst.slice(0,42)}…</div>
+          ${gespeeld?`<div style="display:flex;align-items:center;gap:8px">${sterrenHTML(score)}<span style="font-size:12px;font-weight:700;color:#7c3aed">${score}/100</span>${vol?`<span style="font-size:11px;color:#9ca3af">· Doel: ${vol}+ voor ${s+1}⭐</span>`:'<span style="font-size:11px;color:#d97706;font-weight:700">✨ Topprestatie!</span>'}</div>`:`<span style="font-size:12px;color:#a78bfa;font-weight:700">Nog niet gedaan — doe het nu!</span>`}
+        </div><span style="font-size:20px;color:#a855f7">›</span>
+      </button>
+      ${o.aangemaakt?`<button onclick="event.stopPropagation();verwijderCustomOpdracht(${o.id})" style="position:absolute;bottom:10px;right:44px;background:transparent;border:none;color:#d1d5db;font-size:14px;cursor:pointer;padding:4px" title="Verwijder deze opdracht">🗑️</button>`:''}
+    </div>`;
   }).join('');
 }
-function filterOpdrachten(f){huidigFilter=f;['alle','1','2','3'].forEach(t=>{const b=document.getElementById('tab-'+t);b.style.background=t===f?'#7c3aed':'white';b.style.color=t===f?'white':'#4c1d95';});renderOpdrachten();}
+function filterOpdrachten(f){huidigFilter=f;['alle','1','2','3','nieuw'].forEach(t=>{const b=document.getElementById('tab-'+t);if(!b)return;const actief=t===f;if(t==='nieuw'){b.style.background=actief?'#10b981':'white';b.style.color=actief?'white':'#059669';}else{b.style.background=actief?'#7c3aed':'white';b.style.color=actief?'white':'#4c1d95';}});renderOpdrachten();}
 
 // ── RENDER BADGES ─────────────────────────────────────────────
 function renderBadges(){
@@ -538,12 +687,12 @@ async function renderGeschiedenisAsync(){
   document.getElementById('geschiedenis-laad').style.display='block';
 
   let alle=[];
-  OPDRACHTEN.forEach(o=>(geschiedenis[o.id]||[]).forEach(p=>alle.push({...p,opdrachtId:o.id,opdrachtTitel:o.titel,opdrachtEmoji:o.emoji})));
+  alleOpdrachten().forEach(o=>(geschiedenis[o.id]||[]).forEach(p=>alle.push({...p,opdrachtId:o.id,opdrachtTitel:o.titel,opdrachtEmoji:o.emoji})));
   alle.sort((a,b)=>new Date(b.datum)-new Date(a.datum));
   const gef=geschiedenisFilter==='alle'?alle:alle.filter(p=>p.opdrachtId===parseInt(geschiedenisFilter));
   document.getElementById('geschiedenis-subtitel').textContent=`${alle.length} pogingen totaal`;
 
-  const metP=OPDRACHTEN.filter(o=>(geschiedenis[o.id]||[]).length>0);
+  const metP=alleOpdrachten().filter(o=>(geschiedenis[o.id]||[]).length>0);
   document.getElementById('geschiedenis-tabs').innerHTML=[{id:'alle',titel:'Alle',emoji:'📋'},...metP.map(o=>({id:o.id,titel:o.titel,emoji:o.emoji}))].map(t=>`<button onclick="geschiedenisFilter='${t.id}';renderGeschiedenisAsync()" style="white-space:nowrap;background:${geschiedenisFilter==t.id?'#6366f1':'white'};color:${geschiedenisFilter==t.id?'white':'#4c1d95'};border:2px solid #6366f1;border-radius:99px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">${t.emoji} ${t.titel}</button>`).join('');
 
   if(gef.length===0){
@@ -596,7 +745,7 @@ async function renderGeschiedenisAsync(){
 
 // ── OPDRACHT STARTEN ──────────────────────────────────────────
 function startOpdracht(id){
-  huidigOpdracht=OPDRACHTEN.find(o=>o.id===id);
+  huidigOpdracht=alleOpdrachten().find(o=>o.id===id);
   huidigePogingId=null;
   const o=huidigOpdracht,oudeScore=besteScores[o.id]||0,oudeSterren=scoreNaarSterren(oudeScore),gespeeld=!!besteScores[o.id];
   document.getElementById('opdracht-titel').textContent=`${o.emoji} ${o.titel}`;
@@ -730,9 +879,10 @@ Reageer ALLEEN met JSON (geen markdown, geen uitleg erbuiten):
   const nieuweScore=resultaat.score||0,isRecord=nieuweScore>oudeScore,delta=isRecord?Math.max(1,Math.round((nieuweScore-oudeScore)*0.5)):0;
   if(isRecord){besteScores[huidigOpdracht.id]=nieuweScore;punten+=delta;}
 
-  const scores=OPDRACHTEN.map(o=>besteScores[o.id]||0);
+  const scores=OPDRACHTEN.map(o=>besteScores[o.id]||0); // vaste curriculum-opdrachten — voor alle_een_ster/helft_drie/alle_drie
+  const scoresAlle=alleOpdrachten().map(o=>besteScores[o.id]||0); // inclusief zelfgemaakte — voor perfecte_een
   const check=(id,cond)=>{if(cond&&!behaaldeBadges.includes(id))behaaldeBadges.push(id);};
-  check('eerste',Object.keys(besteScores).length>=1);check('perfecte_een',scores.some(s=>s>=85));check('alle_een_ster',scores.every(s=>s>=40));check('helft_drie',scores.filter(s=>s>=85).length>=9);check('alle_drie',scores.every(s=>s>=85));check('verbetering',isRecord&&oudeScore>0);check('honderd',punten>=100);
+  check('eerste',Object.keys(besteScores).length>=1);check('perfecte_een',scoresAlle.some(s=>s>=85));check('alle_een_ster',scores.every(s=>s>=40));check('helft_drie',scores.filter(s=>s>=85).length>=14);check('alle_drie',scores.every(s=>s>=85));check('verbetering',isRecord&&oudeScore>0);check('honderd',punten>=100);
 
   // FIX #5: bewaar oude fotoIds vóór afkappen
   const fotoId=`foto_${huidigOpdracht.id}_${Date.now()}`;
@@ -808,11 +958,13 @@ async function init(){
     localStorage.removeItem('schrijf_gebruiker');
     localStorage.removeItem('schrijf_voortgang_v11');
     localStorage.removeItem('schrijf_api_key');
+    localStorage.removeItem('schrijf_custom_opdrachten_v11');
     toonToast('✅ Alles gereset!');
     window.history.replaceState({},'',window.location.pathname);
   }
 
   laadVoortgang();
+  laadCustomOpdrachten();
   const key=localStorage.getItem('schrijf_api_key')||'';
   if(key){
     apiKey=key;

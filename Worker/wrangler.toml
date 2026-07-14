@@ -1,0 +1,7 @@
+name = "schrijf-worker"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-07-01"
+
+[[kv_namespaces]]
+binding = "SCHRIJF_KV"
+id = "a77490b6af11484a80bcbcecbe46d7aa"

@@ -821,9 +821,10 @@ PENNENSTREKEN LETTERVORMEN (gebruik dit als referentie):
 - Bij opdrachten met woorden of zinnen: letters zijn verbonden lopend schrift — losse blokletters zijn dan fout. Bij opdrachten die vragen om losse letters te oefenen (zie hieronder) geldt dit NIET.
 - Kleine letters: a, c, e, i, m, n, o, r, s, u, v, w, x zijn romphoogte (tussen grondlijn en romplijn)
 - Stokletters omhoog (tot bovenluslijn, 2x romphoogte): b, d, f, h, k, l, t
-- Lusletters omlaag (tot onderluslijn, 2x romphoogte naar beneden): f, g, j, p, q, y
+- Lusletters omlaag (lus onder de grondlijn): f, g, j, p, q, y, z
 - Hoofdletters zijn altijd groter dan kleine letters (van grondlijn tot bovenluslijn)
-- Specifieke vormen: de 'f' heeft zowel een stok omhoog als een lus omlaag; de 'r' is een kleine boog; de 'z' heeft drie strepen; de 'k' heeft een stok en twee diagonalen
+- In Pennenstreken is ALLES lopend/verbonden schrift — ook de hoofdletters zijn sierlijke lopende letters, geen rechte drukletters/blokletters. Schrijft het kind duidelijke drukletters in plaats van lopende letters, dan is dát het belangrijkste aandachtspunt (behalve bij losse-letter-opdrachten, zie onder) — begin je tip daar dan mee, niet met details over verhoudingen (FIX #19).
+- Specifieke Pennenstreken-vormen (let op waar het kind terugvalt op een drukletter): de 'f' heeft zowel een stok omhoog als een lus omlaag; de 'z' is GÉÉN drukletter-z met drie rechte streepjes, maar een lopende z met een LUS die onder de grondlijn doorloopt; de 'r' is een korte boog met een klein schoudertje bovenaan; de 's' is een smalle lopende s met een spits topje; de 'k' heeft een stok met een klein lusje en een diagonaal
 - Letters moeten rechtop staan, niet schuin hellen
 - Gelijke ruimte tussen letters en woorden
 
@@ -845,6 +846,13 @@ Beoordeel verhoudingen altijd RELATIEF ten opzichte van wat je ziet in het hands
 - Geef NOOIT kritiek op een verhouding die in de foto correct zichtbaar is
 - Bij twijfel over een verhouding: ga ervan uit dat het goed genoeg is voor groep 4 en geef geen kritiek
 - Focus je tip liever op iets dat duidelijk en ondubbelzinnig beter kan — zoals letterafstand, verbinding tussen letters (alleen bij woorden/zinnen, zie hierboven), of een specifieke lettervorm die echt ontbreekt
+
+BELANGRIJK — MAAK DE TIP BRUIKBAAR OM MEE TE OEFENEN (FIX #19):
+De tip moet het kind echt helpen om beter te schrijven, niet alleen zeggen wat er niet goed is.
+- Kies ÉÉN concreet ding, zodat ze zich daar helemaal op kan richten.
+- Zeg niet alleen WAT beter kan, maar vooral HOE: beschrijf de beweging of een klein oefentrucje in kindertaal (bijv. "begin de r met een stokje omhoog en maak dan een klein bergje" of "laat de letters elkaar een handje geven, dan zitten ze mooi aan elkaar vast").
+- Kies iets dat ze bij haar volgende poging echt kan verbeteren: een lettervorm die afwijkt van Pennenstreken (of terugvalt op een drukletter), de verbinding tussen de letters, of de ruimte tussen de woorden.
+- Verbindingen zijn de kern van Pennenstreken. Staan bij een woord of zin de letters los van elkaar terwijl ze verbonden horen te zijn, dan is dat meestal het meest waardevolle om te oefenen — maak daar dan je tip van.
 
 STAPPENKAART (Zoete Zusjes — leidraad voor groep 4):
 1. Goede zithouding en hand op het schrift
@@ -870,7 +878,7 @@ Opdracht die het kind moest maken: "${huidigOpdracht.tekst}"
 Pennenstreken focus van deze opdracht: "${PS_UITLEG[huidigOpdracht.ps]||''}"
 
 Reageer ALLEEN met JSON (geen markdown, geen uitleg erbuiten):
-{"score":<0-100>,"hoofdboodschap":"<korte motiverende zin, max 10 woorden, voor kind van 7>","compliment":"<één specifiek concreet compliment — benoem een letter of element bij naam>","tip":"<één concrete verbeterpunt — benoem specifiek welke letter of wat er anders moet, en hoe>"}`,
+{"score":<0-100>,"hoofdboodschap":"<korte motiverende zin, max 10 woorden, voor kind van 7>","compliment":"<één specifiek concreet compliment — benoem een letter of element bij naam>","tip":"<één concreet verbeterpunt in kindertaal — benoem welke letter of wat er anders moet ÉN hoe ze het kan oefenen (de beweging), zodat ze het bij haar volgende poging beter kan doen>"}`,
       messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:base64}},{type:'text',text:'Beoordeel dit handschrift. Geef alleen JSON.'}]}]
     });
     const tekst=resp.content.map(i=>i.text||'').join('');

@@ -27,6 +27,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.4;} }
   @keyframes slideDown { from{transform:translateY(-20px);opacity:0;}to{transform:translateY(0);opacity:1;} }
+  @keyframes feedbackBounce { 0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);} }
   .laadindicator { display:none; flex-direction:column; align-items:center; gap:12px; padding:24px; }
   .laadindicator.zichtbaar { display:flex; }
   .spinner { width:48px; height:48px; border:5px solid #ede9fe; border-top-color:#7c3aed; border-radius:50%; animation:spin 0.8s linear infinite; }
@@ -104,7 +105,7 @@
 <div id="home" class="screen active">
   <div id="feedback-banner">
     <div style="background:linear-gradient(135deg,#f59e0b,#f97316);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="toonScherm('geschiedenis','home')">
-      <span style="font-size:28px">🎉</span>
+      <span style="font-size:28px;display:inline-block;animation:feedbackBounce 1s ease-in-out infinite">🎉</span>
       <div style="flex:1">
         <div style="font-weight:800;color:white;font-size:14px">Je hebt nieuwe feedback!</div>
         <div style="color:rgba(255,255,255,0.9);font-size:12px">Tik hier om je feedback te bekijken</div>
@@ -582,6 +583,22 @@ async function markeerFeedbackGelezen(){
   document.getElementById('feedback-banner').classList.remove('zichtbaar');
 }
 
+// FIX #20: ververs ongelezen-feedback periodiek zolang het thuisscherm actief en zichtbaar is
+let feedbackPolTimer=null;
+function isHomeActief(){return document.getElementById('home').classList.contains('active');}
+function startFeedbackPolling(){
+  stopFeedbackPolling();
+  feedbackPolTimer=setInterval(()=>{
+    if(isHomeActief()&&!document.hidden)controleerFeedback();
+  },120000);
+}
+function stopFeedbackPolling(){
+  if(feedbackPolTimer){clearInterval(feedbackPolTimer);feedbackPolTimer=null;}
+}
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden&&isHomeActief())controleerFeedback();
+});
+
 // ── HELPERS ───────────────────────────────────────────────────
 function scoreNaarSterren(s){return s>=85?3:s>=65?2:s>=40?1:0;}
 function sterrenHTML(score,groot=false){const s=scoreNaarSterren(score),kl=groot?'big':'';return[1,2,3].map(i=>`<span class="star ${kl} ${i>s?'dim':''}"">⭐</span>`).join('');}
@@ -602,7 +619,8 @@ function toonScherm(id,van){
   if(van)vorigeScherm=van;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='home'){renderHome();controleerFeedback();}
+  if(id==='home'){renderHome();controleerFeedback();startFeedbackPolling();}
+  else stopFeedbackPolling();
   if(id==='opdrachten')renderOpdrachten();
   if(id==='badges')renderBadges();
   // FIX #8: renderGeschiedenis is async, toon laadindicator meteen
@@ -1006,6 +1024,7 @@ async function init(){
     document.getElementById('profiel-overlay').style.display='flex';
   }
   renderHome();
+  startFeedbackPolling();
 }
 init();
 </script>

@@ -9,7 +9,10 @@ child's progress and add their own feedback.
 
 - **Kid-facing app** (`schrijf-superster-v1.1.html`): standalone HTML app.
   Handles profile creation, handwriting attempts, and displays AI + adult
-  feedback. Shows an orange notification banner when new feedback has arrived.
+  feedback. Shows an orange notification banner (with a bouncing emoji, no
+  sound) when new feedback has arrived. Re-checks `/ongelezen` every 2
+  minutes while the home screen is the active screen and the tab is visible
+  (polling stops the moment she navigates elsewhere or backgrounds the tab).
 - **Adult-facing app** (`schrijf-feedback.html`): standalone HTML app, separate
   file, not linked from the kid's app (so a child doesn't stumble into it).
   Lets an adult browse all children's attempts, view the AI's assessment, add
